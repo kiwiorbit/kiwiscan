@@ -1,0 +1,21 @@
+{
+  "short_name": "Crysi",
+  "name": "Crysi Scanner",
+  "description": "Your advanced crypto cex market analysis dashboard.",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3csvg width='192' height='192' viewBox='0 0 256 256' fill='none' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='256' height='256' rx='60' fill='%23181c24'/%3e%3cpath d='M56 184L93.3333 136L128 156L165.333 92L200 116' stroke='%2329ffb8' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/%3e%3crect x='56' y='72' width='144' height='12' rx='6' fill='%234a5568'/%3e%3crect x='56' y='52' width='80' height='12' rx='6' fill='%234a5568' fill-opacity='0.6'/%3e%3c/svg%3e",
+      "type": "image/svg+xml",
+      "sizes": "192x192"
+    },
+    {
+      "src": "data:image/svg+xml,%3csvg width='512' height='512' viewBox='0 0 256 256' fill='none' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='256' height='256' rx='60' fill='%23181c24'/%3e%3cpath d='M56 184L93.3333 136L128 156L165.333 92L200 116' stroke='%2329ffb8' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/%3e%3crect x='56' y='72' width='144' height='12' rx='6' fill='%234a5568'/%3e%3crect x='56' y='52' width='80' height='12' rx='6' fill='%234a5568' fill-opacity='0.6'/%3e%3c/svg%3e",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#29ffb8",
+  "background_color": "#1E1F22"
+}

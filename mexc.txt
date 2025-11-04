@@ -1,0 +1,229 @@
+Skip to content
+Chat history
+You said:
+mexc alpha token api kline 
+ChatGPT said:
+Yes — you can get the k-line (candlestick) data for the token Alephium (ALPH) on the exchange MEXC via their Spot V3 API. Here are the details in simple terms for your use (especially since you’re already using APIs/WebSockets).
+
+✅ What you need
+• Token: ALPH (on MEXC it is quoted as ALPH/USDT) MEXC+1
+• API endpoint: The Spot V3 REST endpoint for klines is:
+
+GET https://api.mexc.com/api/v3/klines
+
+MEXC+1
+• Required parameters:
+• symbol — e.g., "ALPHUSDT" (no slash)
+• interval — one of the allowed intervals: 1m, 5m, 15m, 30m, 60m, 4h, 1d, 1W, 1M MEXC+1
+• Optional: startTime, endTime, limit (how many bars you want) mexcdevelop.github.io+1
+
+🧮 Example request
+If you want the 15-minute candles for ALPH/USDT, you might make an HTTP GET like:
+
+https://api.mexc.com/api/v3/klines?symbol=ALPHUSDT&interval=15m&limit=100
+This will return an array of candles, each candle with open time, open price, high, low, close, volume, etc. MEXC
+
+🔁 Example response snippet
+Each item might look like (simplified):
+
+[
+  1640804880000,  // open time (ms since epoch)
+  "0.300",        // open price
+  "0.305",        // high price
+  "0.295",        // low price
+  "0.302",        // close price
+  "1234.56",      // volume
+  1640804940000,  // close time
+  "some_amount",  // quote volume
+  ...             // (other fields depending on API)
+]
+
+🧠 Tips / things to watch
+• Make sure the symbol exactly matches what MEXC uses (case matters, no slash).
+• The interval string must match one of the listed intervals. If you try something like “1h” or “hour1” and it’s not allowed, you’ll get an error. (There’s a known issue about “1h” interval causing Invalid interval error on MEXC SDK). GitHub
+• Time fields are in milliseconds since epoch in most cases, so convert accordingly.
+• If you need real-time updates instead of REST polling, you can use the WebSocket stream for klines: e.g. channel "spot@public.kline.v3.api.pb@<symbol>@<interval>". MEXC+1
+
+If you like, I can show you a ready-to-use code snippet (in Python or JavaScript) for fetching the ALPH/USDT k-line data from MEXC. Would you like that?
+You said:
+tell me everything about that i need to know to make sure i can fetch data smoothly
+ChatGPT said:
+Perfect — let’s break it down step by step so you can fetch MEXC ALPH k-line (candlestick) data smoothly, without running into common problems. I’ll cover REST, WebSocket, rate limits, time conversions, and gotchas.
+
+1️⃣ API Endpoint (REST)
+URL:
+
+https://api.mexc.com/api/v3/klines
+Required Parameters:
+Parameter	Description
+symbol	Trading pair, e.g., ALPHUSDT (no slash)
+interval	Kline interval: 1m, 5m, 15m, 30m, 1h, 4h, 1d, 1W, 1M
+limit (optional)	Number of candles returned, max 1000 per request
+startTime / endTime (optional)	Unix timestamp in ms, for historical data
+Example: Fetch last 100 candles of 15-minute ALPH/USDT:
+
+https://api.mexc.com/api/v3/klines?symbol=ALPHUSDT&interval=15m&limit=100
+
+2️⃣ Response Structure
+Each candle comes as an array:
+
+[
+  [
+    1640804880000,  // Open time (ms since epoch)
+    "0.300",        // Open
+    "0.305",        // High
+    "0.295",        // Low
+    "0.302",        // Close
+    "1234.56",      // Volume
+    1640804940000,  // Close time
+    "some_amount",  // Quote asset volume
+    "X",            // Number of trades
+    "Y",            // Taker buy base asset volume
+    "Z",            // Taker buy quote asset volume
+    "0"             // Ignore
+  ]
+]
+💡 Tip: Convert open time and close time from milliseconds to human-readable format.
+
+3️⃣ Intervals / Allowed Values
+• 1m, 5m, 15m, 30m → intraday
+• 1h, 4h → longer intraday
+• 1d, 1W, 1M → daily, weekly, monthly
+⚠️ Case-sensitive, exact match is required.
+
+4️⃣ Rate Limits
+• Public REST endpoints: ~ 20 requests/sec per IP
+• Keep limit high (up to 1000) to reduce requests for historical data.
+• Use WebSocket for real-time updates to avoid REST polling limits.
+
+5️⃣ Historical Data Fetching Tips
+• Always fetch using startTime and endTime if you need large history.
+• Max candles per request is 1000. If you need more, loop using startTime = last_candle_time + interval_ms.
+• Time conversion: MEXC uses milliseconds, while JS Date uses ms too — easy.
+
+6️⃣ Real-Time Updates (WebSocket)
+MEXC supports spot WebSocket streams for kline updates:
+• Endpoint:
+
+wss://wbs.mexc.com/ws
+• Subscribe to a kline channel:
+
+{
+  "method": "sub.deal",
+  "params": {
+    "symbol": "ALPHUSDT",
+    "channel": "spot@public.kline.v3.api.pb@15m"
+  },
+  "id": 1
+}
+• You receive every new 15-minute candle as it updates.
+💡 Tip: Use WebSocket if you want live charts or alerts.
+
+7️⃣ Common Gotchas
+1. Symbol format: Always ALPHUSDT — no slash.
+2. Interval mismatch: Only allowed strings accepted.
+3. Time conversion: REST timestamps in milliseconds; convert for loops.
+4. Limits: REST max 1000 candles; plan pagination if fetching large history.
+5. Network errors: Retry on failure (like 500 or 429).
+6. WebSocket reconnection: Always implement auto-reconnect.
+
+8️⃣ Recommended Approach for Smooth Data
+• Historical data → REST (with limit, startTime, endTime)
+• Live updates → WebSocket
+• Caching → Store last candle locally, update only new candles
+• Error handling → Retry logic with exponential backoff
+
+If you want, I can make a ready-to-use TypeScript example that fetches ALPH/USDT klines from MEXC REST and WebSocket, handles rate limits, and converts timestamps automatically — this will be plug-and-play for your charts.
+Do you want me to do that?
+You said:
+i meant i only want to display top 25 coins that r having highest price % change that are in spot
+ChatGPT said:
+Good work — yes you can display the top 25 spot‑coins with the highest 24 h %‑price change on MEXC Global (MEXC). I’ll walk you through everything you need to know — what endpoints to use, how to filter & sort, what criteria to apply — so you can reliably fetch and display this list in your site/app.
+
+✅ What you need to fetch
+1. API endpoint for market data (spot tickers)
+According to the docs: “24 hr Ticker Price Change Statistics” endpoint is available. GitHub+2Mexc Develop+2
+Also, general market‑data endpoints list is here: MEXC+1
+2. Fields to pull
+For each symbol you’ll want at least:
+• Symbol (e.g., ALPHUSDT)
+• 24h price change % (or absolute change + compute % if only absolute is available)
+• Spot status (is spot trading allowed)
+• Possibly volume, to ensure the pair is sufficiently liquid
+• Quote asset (probably USDT or USDC) so you’re comparing like‑pairs
+3. Filtering
+• Only include pairs where spot trading is allowed. You’ll check isSpotTradingAllowed from “Exchange Information” endpoint. MEXC+1
+• Possibly exclude pairs with very low volume or weird quote assets (optional but helps quality).
+• Only include pairs you care about (for example only USDT quote).
+4. Sorting
+• Sort all eligible pairs by 24h % price change descending (highest positive % first)
+• Then take the top 25.
+5. Display
+• For your website/app show symbol, current price, price change %, and maybe volume & last update time.
+• Update frequently (e.g., every 1‑5 minutes) since this is live data.
+
+⚙️ Implementation Steps (in simple terms)
+1. Fetch list of all symbols + info
+Use the “Exchange Information” endpoint to get all trading pairs and filter to those where isSpotTradingAllowed = true.
+Example: /api/v3/exchangeInfo or whatever is documented in the spot v3 docs.
+2. Fetch 24h stats for each symbol
+Use endpoint /api/v3/ticker/24hr (or similar) that returns price change % for given symbol. According to SDK docs: client.ticker24hr(symbol?: string) is available. GitHub
+You might fetch for all symbols (if API supports bulk) or loop through the symbol list.
+3. Filter and sort
+• From the results, keep only those with spot allowed.
+• Ensure quote asset = USDT (or whichever you want) if you only want consistency.
+• Sort by “price change %” descending.
+• Keep first 25.
+4. Display data
+• Update your UI/table accordingly with top 25.
+• Maybe include time stamp of fetch, current price, % change, volume.
+5. Scheduling/refresh
+• Because markets move fast, set a refresh interval (e.g., every 2‑5 minutes).
+• Handle API rate limits: don’t fire too many calls too quickly.
+
+🧠 Important Things / Gotchas
+• Rate limits: Public endpoints allow many calls but don’t abuse them.
+• Bulk vs individual calls: If you loop over thousands of symbols one‑by‑one you’ll hit limits. Check if there is an endpoint returning stats for all symbols at once.
+• Spot vs futures confusion: Make sure you’re fetching spot only, not futures.
+• Symbols format: E.g., ALPHUSDT, not ALPH/USDT.
+• Time for refresh: Very high volatility means your top 25 may change quickly.
+• Volume/liquidity: Some coins may show huge % change but very low volume (risky). Consider minimum volume threshold.
+• Quotes: Different pairs (USDT, USDC, BTC) have different behaviours; better to keep quote consistent.
+• Display logic: Make sure numeric formatting (e.g., +12.34 %) is clear to your audience.
+• Error handling: If an API call fails or returns partial data, you should degrade gracefully (e.g., show “data unavailable”).
+• Sorting tie‑breakers: If two coins have same % change, you might sort by volume.
+
+🎯 Example Pseudocode (JavaScript/TypeScript)
+
+async function fetchTopGainers() {
+  // 1. Get exchange info
+  const infoResp = await fetch('https://api.mexc.com/api/v3/exchangeInfo');
+  const info = await infoResp.json();
+  const spotSymbols = info.symbols.filter(s => s.isSpotTradingAllowed === true && s.quoteAsset === 'USDT');
+// 2. Get 24h stats for all symbols at once (if possible)
+  const statsResp = await fetch('https://api.mexc.com/api/v3/ticker/24hr');
+  const stats = await statsResp.json();  // array of { symbol, priceChangePercent, volume, lastPrice, ... }
+// 3. Filter to only spotSymbols
+  const eligible = stats.filter(s => spotSymbols.some(sp => sp.symbol === s.symbol));
+// 4. Sort by priceChangePercent descending
+  eligible.sort((a, b) => parseFloat(b.priceChangePercent) - parseFloat(a.priceChangePercent));
+// 5. Take top 25
+  const top25 = eligible.slice(0, 25);
+// 6. Display or return
+  return top25.map(s => ({
+    symbol: s.symbol,
+    price: s.lastPrice,
+    changePct: s.priceChangePercent,
+    volume: s.volume
+  }));
+}
+You can then schedule fetchTopGainers() every few minutes, and update your website UI accordingly.
+
+If you like, I can provide a full working code snippet (in JavaScript or Python) tailored for your website (which you said uses HTML/JS) that fetches and displays the top 25 gainers from MEXC. Would you like that?
+Is this conversation helpful so far?
+
+
+
+ChatGPT can make mistakes. Check important info.
+
+From <https://chatgpt.com/c/6902884c-edc4-8320-a5e4-81c5e0307760> 

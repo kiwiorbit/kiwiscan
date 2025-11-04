@@ -1,0 +1,66 @@
+# How this app interacts with external APIs and WebSockets
+
+## Quick summary
+
+This repository uses a small number of public REST APIs and a single combined Binance WebSocket stream to provide near‑real‑time market flow data for a curated list of coins. The design intentionally reduces per‑symbol REST request bursts by batching, sequential per‑coin fetching, shared/global fetches, and using a single combined WebSocket connection for live prices.
+
+This document explains which APIs are used, what each one is used for, how many WebSocket connections are opened, the rate‑limit / anti‑ban strategies implemented in code, observed gaps/risk areas, and practical recommendations to harden the app against bans and 429s.
+
+---
+
+## External endpoints used (what and why)
+
+
+- Binance REST (Spot) (https://api.binance.com/api/v3)
+  - Files: `services/marketDataService.ts`, `services/volumeService.ts`, `services/relativeStrengthService.ts`, `services/kiwitrailservice.ts`
+  - Purpose: fetch klines for RSI and KiwiTrail, fetch klines used to compute net volumes  and small per-symbol REST requests like the last 1h candles. These are used heavily, but the code intentionally minimizes duplication (e.g., base RS for BTC/ETH fetched once per cycle).
+
+- Binance Futures REST (https://fapi.binance.com)
+  - Files: `services/futuresService.ts`, `services/orderBookService.ts`
+  - Purpose: fetch funding rates (bulk endpoint), open interest history (openInterestHist), and  Funding rates are fetched once per refresh as a bulk list (good). Order book and OI are per‑symbol REST calls.
+
+- Binance WebSocket (wss://stream.binance.com:9443/ws)
+  - File: `App.tsx` (setupWebSocket)
+  - Purpose: live trade price updates for all displayed symbols. Uses Binance combined streams by concatenating each symbol's trade stream into a single WebSocket path.
+  - Number of WebSocket connections: 1 persistent combined WebSocket for all symbols (created in `setupWebSocket` and stored in `wsRef`). The app closes and re-opens this single connection when the symbol list changes.
+
+- Alternative.me (https://api.alternative.me/fng/)
+  - File: `services/externalDataService.ts`
+  - Purpose: fetch the Fear & Greed Index (single small request).
+
+
+## How many APIs / sockets and purpose (concise)
+
+- REST APIs:
+  - 1x Binance Spot REST (klines, small per-symbol data)
+  - 1x Binance Futures REST (funding rates bulk, OI, depth)
+  - 1x Alternative.me (F&G index)
+  - (Total distinct REST hosts used: 4)
+
+- WebSockets:
+  - 1x combined Binance WebSocket stream for live trade updates (single WebSocket connection for all symbols).
+
+
+## Rate-limit / anti-ban strategies implemented (observed)
+
+1. Centralized bulk requests where possible
+   - Funding rates: `fetchFundingRates` in `futuresService.ts` calls `/fapi/v1/premiumIndex` once and builds a map for all symbols instead of fetching each symbol's funding separately.
+
+2. Chunking and batching
+   - `App.tsx`'s `fetchAllData` creates chunks of up to 10 coins and processes each chunk in parallel, then waits ~1600ms between chunks:
+     - chunkSize = 10
+     - after each chunk: `await new Promise(resolve => setTimeout(resolve, 1600));`
+   - This limits the short-term burst of REST calls when the app refreshes many symbols.
+
+3. Sequential per‑coin requests
+   - Inside `processCoin` each per‑coin fetch is awaited sequentially (RSI 4h, RSI 1d, volume delta, OI changes, KiwiTrail signals, 1h percent change, orderbook). This prevents simultaneous parallel requests for multiple endpoints for the same coin which would raise instantaneous weight.
+
+4. Shared base values
+   - `getBaseRSChanges` fetches BTC/ETH 1h change once per cycle and reuses those values for all relative strength calculations.
+
+5. Long refresh intervals
+   - Data refresh interval: `DATA_REFRESH_INTERVAL = 150000` (2.5 minutes). Stats refresh interval: `STATS_REFRESH_INTERVAL = 600000` (10 minutes). This reduces overall request frequency compared to a per‑second poll.
+
+6. Single combined WebSocket for live prices
+   - Live price updates come from a single combined Binance WebSocket. This substantially reduces REST polling (no need to repeatedly fetch the latest price via REST). Also only one socket to manage reduces connection churn and per‑socket limits.
+

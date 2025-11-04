@@ -1,0 +1,349 @@
+# How the Crysi Scanner Home Screen is Made
+
+This document breaks down the code used to create the dynamic, multi-layered background and animated title for the Crysi Scanner home screen.
+
+## 1. Overview
+
+The effect is achieved through three main layers stacked on top of each other using CSS `z-index`:
+
+1.  **Base Layer (z-index: -1):** A solid dark background color (`bg-dark-bg`).
+2.  **Aurora Layer (z-index: 0):** A set of blurred, colored circular shapes that create a subtle, shifting aurora effect.
+3.  **Starfield Layer (z-index: 1):** An HTML `<canvas>` element where an animated starfield with comets is drawn using JavaScript.
+4.  **Content Layer (z-index: 10):** The main content, including the title and description, which appears on top of all background layers.
+
+The title and description also have a "slide down and fade in" animation applied on load.
+
+## 2. JSX Structure (`HomeScreen.tsx`)
+
+This is the core React component structure. It sets up the containers for the background effects and the main content.
+
+```jsx
+import React from 'react';
+import Starfield from './Starfield';
+// ... other imports
+
+const HomeScreen = (/*...props...*/) => {
+    return (
+        <div className="relative min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden">
+            {/* Layer 2: Animated starfield canvas */}
+            <Starfield />
+
+            {/* Layer 1: Aurora shapes */}
+            <div className="aurora-container">
+                <div className="aurora-shape aurora-shape1"></div>
+                <div className="aurora-shape aurora-shape2"></div>
+                <div className="aurora-shape aurora-shape3"></div>
+            </div>
+
+            {/* Layer 3: Main Content */}
+            <div className="relative z-10 text-center mb-6 sm:mb-8 md:mb-12">
+                 <div className="opacity-0 animate-slide-down-fade-in flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-4" style={{ animationDelay: '500ms' }}>
+                    <svg className="w-12 h-12 sm:w-16 sm:h-16" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="256" height="256" rx="60" fill="transparent"/>
+                        <path d="M56 184L93.3333 136L128 156L165.333 92L200 116" stroke="#29ffb8" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+                        <rect x="56" y="72" width="144" height="12" rx="6" fill="#4a5568"/>
+                        <rect x="56" y="52" width="80" height="12" rx="6" fill="#4a5568" fill-opacity="0.6"/>
+                    </svg>
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-light-text tracking-tight">
+                        Crysi Scanner
+                    </h1>
+                 </div>
+                <p className="opacity-0 animate-slide-down-fade-in text-base md:text-lg text-medium-text max-w-2xl mx-auto" style={{ animationDelay: '700ms' }}>
+                    Your advanced crypto cex market analysis dashboard.
+                </p>
+            </div>
+        </div>
+    );
+};
+
+export default HomeScreen;
+```
+
+## 3. The Starfield Component (`Starfield.tsx`)
+
+This component uses the HTML Canvas API to render a multi-layered, rotating starfield with occasional comets. It's designed to be performant by using `requestAnimationFrame`.
+
+```jsx
+import React, { useRef, useEffect } from 'react';
+
+const Starfield: React.FC = () => {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        let width = window.innerWidth;
+        let height = window.innerHeight;
+        let animationFrameId: number;
+        
+        const setup = () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        };
+
+        const STAR_LAYERS = [
+            // Increased radius by 40%
+            { count: 40, minRadius: 2.1, maxRadius: 3.5, speed: 0.8, twinkle: true }, // Foreground
+            { count: 100, minRadius: 1.1, maxRadius: 2.1, speed: 0.5, twinkle: false }, // Midground
+            { count: 400, minRadius: 0.4, maxRadius: 1.1, speed: 0.2, twinkle: false }, // Background
+        ];
+
+        const NEBULAE = [
+            { x: 0.2, y: 0.3, radius: 0.4, color: 'rgba(75, 0, 130, 0.15)' }, // Indigo
+            { x: 0.8, y: 0.7, radius: 0.5, color: 'rgba(0, 75, 130, 0.12)' }, // Teal
+            { x: 0.5, y: 0.8, radius: 0.3, color: 'rgba(130, 0, 75, 0.15)' }, // Purple
+        ];
+
+        let stars: any[] = [];
+        let comets: any[] = [];
+        let rotation = 0;
+        // Full rotation over ~240 seconds (4 minutes)
+        const ROTATION_SPEED = (Math.PI * 2) / (240 * 60); 
+
+        const createStars = () => {
+            stars = [];
+            const maxDist = Math.sqrt(width*width + height*height);
+            STAR_LAYERS.forEach(layer => {
+                for (let i = 0; i < layer.count; i++) {
+                    stars.push({
+                        dist: (Math.random() ** 2) * maxDist / 2,
+                        angle: Math.random() * Math.PI * 2,
+                        radius: Math.random() * (layer.maxRadius - layer.minRadius) + layer.minRadius,
+                        // Increased opacity for brighter stars
+                        alpha: Math.random() * 0.5 + 0.4, 
+                        twinkle: layer.twinkle,
+                        twinkleSpeed: Math.random() * 0.02,
+                        twinklePhase: Math.random() * Math.PI * 2,
+                        speedMultiplier: layer.speed,
+                    });
+                }
+            });
+        };
+
+        const createComets = () => {
+            // Keep a max of 1 comet on screen, and spawn it occasionally
+            if (comets.length < 1 && Math.random() > 0.97) {
+                 const edge = Math.floor(Math.random() * 4);
+                let x, y, angle;
+
+                switch (edge) {
+                    case 0: // Top
+                        x = Math.random() * width;
+                        y = -10;
+                        angle = Math.random() * Math.PI;
+                        break;
+                    case 1: // Right
+                        x = width + 10;
+                        y = Math.random() * height;
+                        angle = Math.random() * Math.PI + Math.PI / 2;
+                        break;
+                    case 2: // Bottom
+                        x = Math.random() * width;
+                        y = height + 10;
+                        angle = Math.random() * Math.PI + Math.PI;
+                        break;
+                    case 3: // Left
+                        x = -10;
+                        y = Math.random() * height;
+                        angle = Math.random() * Math.PI - Math.PI / 2;
+                        break;
+                    default: x = 0; y = 0; angle = 0;
+                }
+
+                comets.push({
+                    x,
+                    y,
+                    radius: Math.random() * 1.5 + 0.5,
+                    speed: Math.random() * 1.5 + 0.5, // Increased speed
+                    angle,
+                    length: Math.random() * 80 + 40,
+                    alpha: 1,
+                });
+            }
+        };
+
+        const draw = () => {
+            if (!ctx) return;
+            ctx.clearRect(0, 0, width, height);
+
+            rotation += ROTATION_SPEED;
+            
+            // Draw Nebulae
+            NEBULAE.forEach(nebula => {
+                const centerX = nebula.x * width;
+                const centerY = nebula.y * height;
+                const radius = nebula.radius * Math.min(width, height);
+                const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+                gradient.addColorStop(0, nebula.color);
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, width, height);
+            });
+
+            // Draw Stars
+            const centerX = width / 2;
+            const centerY = height / 2;
+            stars.forEach(star => {
+                const currentAngle = star.angle + rotation * star.speedMultiplier;
+                const x = centerX + Math.cos(currentAngle) * star.dist;
+                const y = centerY + Math.sin(currentAngle) * star.dist;
+
+                let alpha = star.alpha;
+                if (star.twinkle) {
+                    alpha *= (Math.sin(star.twinklePhase + Date.now() * 0.001 * star.twinkleSpeed) * 0.4 + 0.6);
+                }
+
+                if (x > 0 && x < width && y > 0 && y < height) {
+                    ctx.fillStyle = `rgba(222, 226, 230, ${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(x, y, star.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+
+            // Draw and update comets
+            createComets();
+            comets.forEach((comet, index) => {
+                const tailX = comet.x - comet.length * Math.cos(comet.angle);
+                const tailY = comet.y - comet.length * Math.sin(comet.angle);
+
+                const gradient = ctx.createLinearGradient(comet.x, comet.y, tailX, tailY);
+                // Changed comet color to app's primary theme color: #29ffb8 (41, 255, 184)
+                gradient.addColorStop(0, `rgba(41, 255, 184, ${comet.alpha})`);
+                gradient.addColorStop(1, 'rgba(41, 255, 184, 0)');
+
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = comet.radius;
+                ctx.beginPath();
+                ctx.moveTo(comet.x, comet.y);
+                ctx.lineTo(tailX, tailY);
+                ctx.stroke();
+
+                comet.x += Math.cos(comet.angle) * comet.speed;
+                comet.y += Math.sin(comet.angle) * comet.speed;
+                comet.alpha -= 0.0025;
+
+                if (comet.alpha <= 0) {
+                    comets.splice(index, 1);
+                }
+            });
+
+            animationFrameId = requestAnimationFrame(draw);
+        };
+
+        const handleResize = () => {
+            setup();
+            createStars();
+        };
+        
+        setup();
+        createStars();
+        draw();
+        
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            cancelAnimationFrame(animationFrameId);
+            window.removeEventListener('resize', handleResize);
+        };
+    }, []);
+
+    return <canvas ref={canvasRef} id="starfield-canvas" />;
+};
+
+export default Starfield;
+```
+
+## 4. CSS Styling (`index.html`)
+
+These CSS rules define the positioning and appearance of the background layers and the animations for the title.
+
+### Background Layer Styles
+
+```css
+/* === Starfield Canvas === */
+#starfield-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 1; /* Position between aurora and content */
+  pointer-events: none; /* Make it non-interactive */
+}
+
+/* === Aurora Background === */
+.aurora-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0; /* Behind the content */
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.aurora-shape {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  will-change: transform, opacity;
+}
+
+:root {
+  --aurora-color-1: #29ffb8;
+  --aurora-color-2: #4ec3fa;
+  --aurora-color-3: #313a4a;
+}
+
+.aurora-shape1 {
+  width: 300px;
+  height: 300px;
+  background: var(--aurora-color-1);
+  top: -100px;
+  left: -100px;
+  opacity: 0.3;
+}
+
+.aurora-shape2 {
+  width: 350px;
+  height: 350px;
+  background: var(--aurora-color-2);
+  bottom: -150px;
+  right: -150px;
+  opacity: 0.25;
+}
+
+.aurora-shape3 {
+  width: 250px;
+  height: 250px;
+  background: var(--aurora-color-3);
+  bottom: 50px;
+  left: 20%;
+  opacity: 0.2;
+}
+```
+
+### Title Animation Styles
+
+These are defined inside the `tailwind.config` script in `index.html`. The `animate-slide-down-fade-in` class is then used in the JSX.
+
+```javascript
+// from tailwind.config
+// ...
+animation: {
+    'slide-down-fade-in': 'slide-down-fade-in 1s ease-out forwards'
+},
+keyframes: {
+    'slide-down-fade-in': {
+        'from': { opacity: '0', transform: 'translateY(-20px)' },
+        'to': { opacity: '1', transform: 'translateY(0)' }
+    }
+}
+//...
+```
+
+---
+
+This combination of layered elements creates a visually engaging and professional-looking home screen that sets the tone for the advanced analytics within the application.
