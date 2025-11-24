@@ -19,14 +19,14 @@ export const getNotificationDetails = (notification: Notification): Notification
             accentColor = 'bg-indigo-500';
             iconColor = 'text-indigo-500';
             break;
-        case 'luxalgo-bullish-flip':
+        case 'kiwi-bullish-flip':
             icon = 'fa-retweet';
             title = `${notification.symbol} Kiwi trail Buys (${notification.timeframe})`;
             body = notification.body || `Bias flipped bullish.`;
             accentColor = 'bg-green-500';
             iconColor = 'text-green-500';
             break;
-        case 'luxalgo-bearish-flip':
+        case 'kiwi-bearish-flip':
             icon = 'fa-retweet';
             title = `${notification.symbol} Kiwi trail Sells (${notification.timeframe})`;
             body = notification.body || `Bias flipped bearish.`;

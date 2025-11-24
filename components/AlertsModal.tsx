@@ -64,8 +64,8 @@ const AlertsModal: React.FC<AlertsModalProps> = ({ isOpen, onClose, settings, on
                     <div>
                         <h4 className="text-lg font-bold mb-3 text-light-text">Kiwi Trail Alerts</h4>
                         <ul className="space-y-2">
-                            <AlertToggle condition="luxalgoBullishFlip" label="Kiwi Trail Buys" description="Alerts when the bias flips to Bullish. (15m, 1h, 4h, 1d)" settings={settings} onChange={onAlertConditionChange} />
-                            <AlertToggle condition="luxalgoBearishFlip" label="Kiwi Trail Sells" description="Alerts when the bias flips to Bearish. (15m, 1h, 4h, 1d)" settings={settings} onChange={onAlertConditionChange} />
+                            <AlertToggle condition="kiwiBullishFlip" label="Kiwi Trail Buys" description="Alerts when the bias flips to Bullish. (15m, 1h, 4h, 1d)" settings={settings} onChange={onAlertConditionChange} />
+                            <AlertToggle condition="kiwiBearishFlip" label="Kiwi Trail Sells" description="Alerts when the bias flips to Bearish. (15m, 1h, 4h, 1d)" settings={settings} onChange={onAlertConditionChange} />
                         </ul>
                     </div>
                     

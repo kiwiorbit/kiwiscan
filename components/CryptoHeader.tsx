@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, memo, useMemo } from 'react';
 import type { Notification } from '../types';
 import NotificationPanel from './NotificationPanel';
@@ -15,8 +16,8 @@ interface CryptoHeaderProps {
     onShowFavoritesOnlyToggle: () => void;
     isConfluenceFilterActive: boolean;
     onToggleConfluenceFilter: () => void;
-    scannerType: 'cex' | 'mexc';
-    onScannerTypeChange: (type: 'cex' | 'mexc') => void;
+    isVisualView: boolean;
+    onToggleVisualView: () => void;
 }
 
 const CryptoHeader: React.FC<CryptoHeaderProps> = ({
@@ -31,8 +32,8 @@ const CryptoHeader: React.FC<CryptoHeaderProps> = ({
     onShowFavoritesOnlyToggle,
     isConfluenceFilterActive,
     onToggleConfluenceFilter,
-    scannerType,
-    onScannerTypeChange,
+    isVisualView,
+    onToggleVisualView,
 }) => {
     const { userAddress, disconnectWallet } = useAppContext();
     const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -120,20 +121,6 @@ const CryptoHeader: React.FC<CryptoHeaderProps> = ({
                         <div className="text-center md:text-left">
                             <h1 className="text-xl font-bold text-light-text tracking-tight">Crysi Scanner</h1>
                         </div>
-                        <div className="flex bg-dark-bg p-1 rounded-lg">
-                            <button
-                                onClick={() => onScannerTypeChange('cex')}
-                                className={`px-4 py-1 text-xs font-bold rounded-md transition-colors ${scannerType === 'cex' ? 'bg-primary text-dark-bg' : 'hover:bg-dark-border text-light-text'}`}
-                            >
-                                BINANCE
-                            </button>
-                            <button
-                                onClick={() => onScannerTypeChange('mexc')}
-                                className={`px-4 py-1 text-xs font-bold rounded-md transition-colors ${scannerType === 'mexc' ? 'bg-primary text-dark-bg' : 'hover:bg-dark-border text-light-text'}`}
-                            >
-                                MEXC
-                            </button>
-                        </div>
                     </div>
 
                     <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 sm:gap-4 header-controls-group">
@@ -166,6 +153,15 @@ const CryptoHeader: React.FC<CryptoHeaderProps> = ({
                             title="Filter Confluence Signals"
                         >
                             <i className={`fa-solid fa-fire text-[22px]`}></i>
+                        </button>
+                         <button
+                            onClick={onToggleVisualView}
+                            className={`bg-dark-bg rounded-lg p-2 w-[42px] h-[42px] flex items-center justify-center border shadow-sm hover:bg-dark-border transition ${isVisualView ? 'border-primary text-primary' : 'border-dark-border text-primary/70'}`}
+                            aria-pressed={isVisualView}
+                            aria-label="Toggle visual view"
+                            title="Toggle Visual View"
+                        >
+                            <i className={`fa-solid fa-atom text-[22px]`}></i>
                         </button>
                         <button
                             onClick={onSettingsToggle}

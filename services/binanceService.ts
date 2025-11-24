@@ -1,12 +1,15 @@
+
+
 import type { SymbolData, Timeframe, RsiDataPoint, PriceDataPoint, VolumeProfileData, Settings, Kline } from '../types';
 import { calculateVolumeProfile } from './volumeProfileService';
-import { calculateStatisticalTrailingStop } from './luxalgoService';
+import { calculateStatisticalTrailingStop } from './kiwiService';
 import { calculateSupertrend } from './supertrendService';
+import { calculateHighLowAlgo } from './highLowAlgoService'; // NEW import
 
 const SPOT_API_BASE_URL = 'https://api.binance.com/api/v3/klines';
 const FUTURES_API_BASE_URL = 'https://fapi.binance.com/fapi/v1/klines';
 const FUTURES_DATA_BASE_URL = 'https://fapi.binance.com/futures/data';
-const FUTURES_OI_URL = 'https://fapi.binance.com/futures/data/openInterestHist';
+const FUTURES_OI_URL = 'https://fapi.binance.com/fapi/v1/openInterestHist';
 const FUTURES_PREMIUM_URL = 'https://fapi.binance.com/fapi/v1/premiumIndex';
 
 // Helper function to fetch and process OI data for a specific period
@@ -196,6 +199,29 @@ export const fetchDailyVwap = async (symbol: string): Promise<number | null> => 
     return null;
 }
 
+const calculateATR = (klines: PriceDataPoint[], period: number): number | null => {
+    if (klines.length < period) return null;
+
+    const trueRanges: number[] = [];
+    for (let i = 1; i < klines.length; i++) {
+        const kline = klines[i];
+        const prevKline = klines[i - 1];
+        const tr = Math.max(
+            kline.high - kline.low,
+            Math.abs(kline.high - prevKline.close),
+            Math.abs(kline.low - prevKline.close)
+        );
+        trueRanges.push(tr);
+    }
+
+    if (trueRanges.length < period) return null;
+
+    // Simple Moving Average for ATR
+    const relevantTRs = trueRanges.slice(-period);
+    const atr = relevantTRs.reduce((sum, val) => sum + val, 0) / period;
+    return atr;
+};
+
 
 const findPivots = (klines: PriceDataPoint[], lookback: number, isHigh: boolean): number | null => {
     // Find the most recent pivot
@@ -278,22 +304,8 @@ export const fetchRsiForSymbol = async (symbol: string, timeframe: Timeframe, se
     const supertrendPeriod = 10;
     const supertrendMultiplier = 1.0;
     
-    // Calculate required candles for AVB lookback
-    const { lookbackPeriod } = settings.anomalousBuyingVolumeSettings;
-    let avbLookbackCandles = 0;
-    if (lookbackPeriod.endsWith('h')) {
-        const timeframeMinutesMap: { [key in Timeframe]?: number } = {
-            '1m': 1, '5m': 5, '15m': 15, '30m': 30, '1h': 60, '2h': 120, '4h': 240, '8h': 480, '1d': 1440, '3d': 4320, '1w': 10080
-        };
-        const timeframeMinutes = timeframeMinutesMap[timeframe];
-        if (timeframeMinutes) {
-            const lookbackHours = parseInt(lookbackPeriod.replace('h', ''), 10);
-            avbLookbackCandles = Math.round((lookbackHours * 60) / timeframeMinutes);
-        }
-    }
-
-    const maxLookback = Math.max(rsiLength + stochLength + kSmooth + dSmooth, sma100Length, supertrendPeriod, avbLookbackCandles);
-    const fetchLimit = candlesDisplayed + maxLookback + 100; // Extra buffer for LuxAlgo and KiwiHunt
+    const maxLookback = Math.max(rsiLength + stochLength + kSmooth + dSmooth, sma100Length, supertrendPeriod, settings.highLowAlgoSettings.dist); // Added algo dist
+    const fetchLimit = candlesDisplayed + maxLookback + 100; // Extra buffer
     
     const url = `${baseUrl}?symbol=${apiSymbol}&interval=${timeframe}&limit=${fetchLimit}`;
     const response = await fetch(url);
@@ -365,8 +377,10 @@ export const fetchRsiForSymbol = async (symbol: string, timeframe: Timeframe, se
     const { stochK, stochD } = calculateStochRSI(rsiData, rsiLength, stochLength, kSmooth, dSmooth);
     const vwapData = calculateVWAP(priceDataPoints);
     const volumeProfile = calculateVolumeProfile(priceDataPoints.slice(-candlesDisplayed));
-    const luxalgoTrailData = calculateStatisticalTrailingStop(klinesForTrail, settings);
+    const kiwiTrailData = calculateStatisticalTrailingStop(klinesForTrail, settings);
     const supertrendData = calculateSupertrend(priceDataPoints, supertrendPeriod, supertrendMultiplier);
+    const atr14 = calculateATR(priceDataPoints, 14);
+    const { signals: highLowAlgoSignals, channel: highLowAlgoChannel } = calculateHighLowAlgo(priceDataPoints, settings.highLowAlgoSettings);
     
     // --- CVD Calculation ---
     const cvdData: RsiDataPoint[] = [];
@@ -420,9 +434,6 @@ export const fetchRsiForSymbol = async (symbol: string, timeframe: Timeframe, se
         vwapAnchoredLow = calculateVWAP(klinesFromLow);
     }
 
-    const sliceData = <T,>(arr: T[] | undefined): T[] | undefined => arr ? arr.slice(-candlesDisplayed) : undefined;
-
-
     return {
         rsi: rsiData.slice(-candlesDisplayed), sma: smaData.slice(-candlesDisplayed), 
         priceSma: priceSmaData.slice(-candlesDisplayed),
@@ -438,8 +449,11 @@ export const fetchRsiForSymbol = async (symbol: string, timeframe: Timeframe, se
         openInterestChange: Object.keys(openInterestChange).length > 0 ? openInterestChange : undefined,
         price, volume, quoteVolume, klines: priceDataPoints.slice(-candlesDisplayed),
         volumeProfile: volumeProfile ?? undefined,
-        luxalgoTrail: luxalgoTrailData.slice(-candlesDisplayed),
+        kiwiTrail: kiwiTrailData.slice(-candlesDisplayed),
         supertrend: supertrendData.slice(-candlesDisplayed),
         cvd: cvdData.slice(-candlesDisplayed),
+        atr14: atr14 ?? undefined,
+        highLowAlgoSignals,
+        highLowAlgoChannel,
     };
 };

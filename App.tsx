@@ -1,8 +1,8 @@
 
+
 import React from 'react';
 import { AppProvider, useAppContext } from './context/AppContext';
 import CryptoHeader from './components/CryptoHeader';
-import KiwiTrailGrid from './components/KiwiTrailGrid';
 import SettingsPanel from './components/SettingsPanel';
 import Footer from './components/Footer';
 import AssetListModal from './components/AssetListModal';
@@ -11,9 +11,10 @@ import AlertLogModal from './components/AlertLogModal';
 import TableSettingsModal from './components/TableSettingsModal';
 import PriceDetailPage from './components/PriceDetailPage';
 import PriceDetailModal from './components/PriceDetailModal';
-import AutomationModal from './components/AutomationModal';
-import MexcScannerPage from './components/MexcScannerPage';
-import GatewayPage from './components/GatewayPage';
+import CexScannerPage from './components/CexScannerPage';
+
+// This file is intentionally left blank as the feature has been removed.
+// import GatewayPage from './components/GatewayPage';
 
 // === Splash Screen Component ===
 const SplashScreen: React.FC = () => {
@@ -38,12 +39,14 @@ const AppContent: React.FC = () => {
         allSymbols,
         showFavoritesOnly,
         isConfluenceFilterActive,
+        isVisualView,
         handleSettingChange,
         handleAlertConditionChange,
         handleColumnVisibilityChange,
         toggleFavorite,
         handleShowFavoritesOnlyToggle,
         handleToggleConfluenceFilter,
+        handleToggleVisualView,
         handleSaveAssetList,
         handleResetSettings,
         timeframe,
@@ -65,8 +68,6 @@ const AppContent: React.FC = () => {
         isAlertLogOpen,
         isTableSettingsModalOpen,
         isChartModalOpen,
-        isAutomationModalOpen,
-        handleBackToScanner,
         handleSettingsToggle,
         setIsSettingsOpen,
         setIsAssetModalOpen,
@@ -74,36 +75,19 @@ const AppContent: React.FC = () => {
         setIsAlertLogOpen,
         setIsTableSettingsModalOpen,
         setIsChartModalOpen,
-        setIsAutomationModalOpen,
         searchTerm,
         handleSearchChange,
-        displayedSymbols,
-        isLocked,
         userAddress,
-        connectWallet,
         disconnectWallet,
         handleKiwiTrailCellClick,
-        scannerType,
-        handleScannerTypeChange,
-        isSubscribed,
-        handleSubscribe,
     } = useAppContext();
 
     if (isInitializing) return <SplashScreen />;
     
-    // DEV NOTE: Temporarily disabled GatewayPage to allow development on the main app.
-    // To re-enable, uncomment the following block.
-    
-    if (isLocked || !isSubscribed) {
-        return (
-            <GatewayPage 
-                onConnect={connectWallet}
-                onSubscribe={handleSubscribe}
-                userAddress={userAddress}
-            />
-        );
-    }
-
+    // Conditionally render GatewayPage if no user is connected
+    // if (!userAddress) {
+    //     return <GatewayPage onConnect={connectWallet} onSubscribe={handleSubscribe} userAddress={userAddress} />;
+    // }
     
     const isChartPageVisible = appScreen === 'chart';
 
@@ -133,22 +117,17 @@ const AppContent: React.FC = () => {
                             onShowFavoritesOnlyToggle={handleShowFavoritesOnlyToggle}
                             isConfluenceFilterActive={isConfluenceFilterActive}
                             onToggleConfluenceFilter={handleToggleConfluenceFilter}
-                            scannerType={scannerType}
-                            onScannerTypeChange={handleScannerTypeChange}
+                            isVisualView={isVisualView}
+                            onToggleVisualView={handleToggleVisualView}
                         />
                         <main className="pt-40 md:pt-24">
-                            {scannerType === 'cex' ? (
-                                <KiwiTrailGrid 
-                                    symbols={displayedSymbols} 
-                                    onKiwiTrailCellClick={handleKiwiTrailCellClick} 
-                                    settings={settings} 
-                                    favorites={favorites} 
-                                    onToggleFavorite={toggleFavorite} 
-                                    isConfluenceFilterActive={isConfluenceFilterActive}
-                                />
-                            ) : (
-                                <MexcScannerPage />
-                            )}
+                           <CexScannerPage 
+                                onKiwiTrailCellClick={handleKiwiTrailCellClick} 
+                                settings={settings} 
+                                favorites={favorites} 
+                                onToggleFavorite={toggleFavorite} 
+                                isConfluenceFilterActive={isConfluenceFilterActive}
+                            />
                         </main>
                     </div>
                      <SettingsPanel 
@@ -158,7 +137,6 @@ const AppContent: React.FC = () => {
                         onOpenAlertsModal={() => setIsAlertsModalOpen(true)}
                         onOpenAlertLogModal={() => setIsAlertLogOpen(true)}
                         onOpenTableSettingsModal={() => setIsTableSettingsModalOpen(true)}
-                        onOpenAutomationModal={() => setIsAutomationModalOpen(true)}
                         onReset={handleResetSettings}
                         settings={settings}
                         onSettingChange={handleSettingChange}
@@ -184,12 +162,6 @@ const AppContent: React.FC = () => {
                         onColumnVisibilityChange={handleColumnVisibilityChange}
                     />
                     <AssetListModal isOpen={isAssetModalOpen} onClose={() => setIsAssetModalOpen(false)} onSave={handleSaveAssetList} allSymbols={allSymbols} currentSymbols={userSymbols} />
-                    <AutomationModal 
-                        isOpen={isAutomationModalOpen}
-                        onClose={() => setIsAutomationModalOpen(false)}
-                        settings={settings}
-                        onSettingChange={handleSettingChange}
-                    />
                     <Footer />
                 </div>
             </div>

@@ -27,20 +27,20 @@ const AlertLogModal: React.FC<AlertLogModalProps> = ({ isOpen, onClose, alertLog
                 // Check if last part is a timestamp for event-based alerts
                 if (!isNaN(parseInt(lastPart, 10)) && new Date(parseInt(lastPart, 10)).getTime() > 0) {
                      return {
-                        uniqueId: key.replace('luxalgo', 'Kiwitrail'),
+                        uniqueId: key,
                         timestamp: timestamp, // The value is the fire time
                         symbol: parts[0],
                         timeframe: parts[1],
-                        alertType: parts.slice(2, -1).join('-').replace('luxalgo', 'Kiwitrail')
+                        alertType: parts.slice(2, -1).join('-')
                     };
                 } else {
                     // State-based alert (no timestamp in key)
                     return {
-                        uniqueId: key.replace('luxalgo', 'Kiwitrail'),
+                        uniqueId: key,
                         timestamp: timestamp,
                         symbol: parts[0],
                         timeframe: parts[1],
-                        alertType: parts.slice(2).join('-').replace('luxalgo', 'Kiwitrail')
+                        alertType: parts.slice(2).join('-')
                     };
                 }
             })

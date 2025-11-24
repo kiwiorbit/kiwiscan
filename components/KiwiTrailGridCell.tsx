@@ -22,7 +22,8 @@ const KiwiTrailDot: React.FC<{
     symbol: string;
     onClick: (symbol: string, timeframe: Timeframe) => void;
 }> = ({ data, timeframe, symbol, onClick }) => {
-    const bias = data?.luxalgoTrail?.[data.luxalgoTrail.length - 1]?.bias;
+    // FIX: Property 'luxalgoTrail' does not exist on type 'SymbolData'. Replaced with 'kiwiTrail'.
+    const bias = data?.kiwiTrail?.[data.kiwiTrail.length - 1]?.bias;
     const color = bias === 1 ? 'bg-green-500' : bias === 0 ? 'bg-red-500' : 'bg-dark-border';
     
     const handleClick = (e: React.MouseEvent) => {

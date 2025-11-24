@@ -1,0 +1,112 @@
+//@version=6
+indicator("Ay4nbolic Algo v6 (Threshold Edition)", overlay=true, max_labels_count=500)
+
+// === INPUTS ===
+dist          = input.int(30, "Lookback Distance", minval=1)
+showBars      = input.int(500, "Bars to Show", minval=1)
+enableAlert   = input.bool(true, "Enable Alerts")
+
+// Threshold Settings (NEW)
+buy_threshold_pct  = input.float(0.3, "Buy Threshold Above Channel Low (%)", minval=0.0, maxval=5.0)
+sell_threshold_pct = input.float(0.3, "Sell Threshold Below Channel High (%)", minval=0.0, maxval=5.0)
+
+// Entry/Exit Modes
+buy_mode  = input.string("Default", "Buy Entry Mode", options=["Default", "Hammer", "Green Close", "Hammer + Green"], group="Entry/Exit Modes")
+sell_mode = input.string("Default", "Sell Exit Mode", options=["Default", "Red Close", "Doji", "Doji + Red Close"], group="Entry/Exit Modes")
+
+// Candle Pattern Settings
+hammer_wick_ratio = input.float(1.0, "Hammer Lower Wick / Body Ratio ≥", minval=1.0, group="Candle Patterns")
+doji_body_ratio   = input.float(0.1, "Doji Max Body / Range Ratio ≤", minval=0.0, maxval=0.5, group="Candle Patterns")
+
+// Stop Loss Settings
+sl_mode       = input.string("None", "Stop Loss Mode", options=["None", "Signal Candle Low"], group="Stop Loss")
+sl_buffer_pct = input.float(0.1, "SL Buffer Below Low (%)", minval=0.0, maxval=5.0, step=0.1, group="Stop Loss")
+intrabarSL    = input.bool(true, "Intrabar SL (trigger on wick, not close)", group="Stop Loss")
+
+// === CALCULATIONS ===
+hh       = ta.highest(high, dist)
+ll       = ta.lowest(low, dist)
+isActive = bar_index >= (ta.highest(bar_index, 1) - showBars)
+isHigh   = ta.highestbars(high, dist) == 0
+isLow    = ta.lowestbars(low, dist)  == 0
+
+// NEW — near channel logic
+nearLow  = low  <= ll * (1 + buy_threshold_pct  / 100)
+nearHigh = high >= hh * (1 - sell_threshold_pct / 100)
+
+// Candle patterns
+body       = math.abs(close - open)
+lowerWick  = math.min(open, close) - low
+upperWick  = high - math.max(open, close)
+isHammer   = lowerWick >= hammer_wick_ratio * body and upperWick <= body * 0.5
+isDoji     = (high - low) > 0 and body <= doji_body_ratio * (high - low)
+greenCandle = close > open
+redCandle   = close < open
+
+buy_ok()  => buy_mode == "Green Close" or (buy_mode == "Hammer" and isHammer) or (buy_mode == "Green Close" and greenCandle) or (buy_mode == "Hammer + Green" and isHammer and greenCandle)
+sell_ok() => sell_mode == "Red Close" or (sell_mode == "Red Close" and redCandle) or (sell_mode == "Doji" and isDoji) or (sell_mode == "Doji + Red Close" and isDoji and redCandle)
+
+// === STATE VARIABLES ===
+var int    signalBar = na
+var string direction = "none"      // "buy" or "sell"
+var float  slLevel   = na
+var bool   slJustHit = false
+slJustHit := false
+
+// === MAIN LOGIC ===
+if isActive
+    // 1. Check SL hit first
+    bool slTriggered = false
+    if sl_mode == "Signal Candle Low" and direction == "buy" and not na(slLevel)
+        float priceToCheck = intrabarSL ? low : close
+        slTriggered := priceToCheck <= slLevel
+
+    if slTriggered
+        signalBar := bar_index
+        direction := "sell"
+        slLevel   := na
+        slJustHit := true
+
+    // 2. Normal logic
+    else
+        // --- BUY signal (updated with nearLow) ---
+        if (na(signalBar) or direction == "sell") and nearLow and buy_ok()
+            signalBar := bar_index
+            direction := "buy"
+            float baseLow = low
+            slLevel   := baseLow * (1 - sl_buffer_pct / 100)
+
+        // --- EXIT from BUY (updated with nearHigh) ---
+        if direction == "buy"
+            bool newHighMade = isHigh
+
+            bool exitCondition = 
+                 sell_mode == "Default" ? (nearHigh or (newHighMade and sell_ok())) :
+                 newHighMade and sell_ok()
+
+            if exitCondition
+                signalBar := bar_index
+                direction := "sell"
+                slLevel   := na
+
+// === PLOTS ===
+bool newBuy  = signalBar == bar_index and direction == "buy"
+bool newSell = signalBar == bar_index and direction == "sell"
+
+plotshape(newBuy, title="Buy", style=shape.triangleup, location=location.belowbar,
+     color=color.lime, size=size.tiny)
+
+plotshape(newSell and not slJustHit, title="Sell", style=shape.triangledown, location=location.abovebar,
+     color=color.red, size=size.tiny)
+
+plotshape(slJustHit, title="SL Hit", style=shape.cross, location=location.belowbar,
+     color=color.red, size=size.tiny, text="SL Hit", textcolor=color.white)
+
+// Channels
+plot(isActive ? hh : na, "High Channel", color=color.rgb(255, 213, 213), linewidth=1)
+plot(isActive ? ll : na, "Low Channel", color=color.rgb(194, 255, 225), linewidth=1)
+
+// === ALERTS ===
+alertcondition(newBuy,  title="BUY Signal",  message="Ay4nbolic BUY")
+alertcondition(newSell and not slJustHit, title="SELL Signal", message="Ay4nbolic SELL")
+alertcondition(slJustHit, title="SL Hit", message="Sl Hit!")

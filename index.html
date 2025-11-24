@@ -275,6 +275,7 @@
       .header-on-load .header-controls-group > *:nth-child(3) { animation-delay: 0.7s; }
       .header-on-load .header-controls-group > *:nth-child(4) { animation-delay: 0.8s; }
       .header-on-load .header-controls-group > *:nth-child(5) { animation-delay: 0.9s; }
+      .header-on-load .header-controls-group > *:nth-child(6) { animation-delay: 1.0s; }
 
 
       /* Aurora Background */
@@ -389,15 +390,28 @@
        
       /* === NEW: Custom Pulse for Kiwi Trail Table Cell === */
       @keyframes pulse-glow-cell {
-        0%, 20%, 100% { /* Stays black for the last 80% of the time */
-          background-color: rgba(44, 58, 53, 0.5);
+        0%, 20%, 100% {
+          background-color: transparent;
         }
-        10% { /* Peak of the glow happens at the 1-second mark */
-          background-color: rgba(41, 255, 184, 0.1);
+        10% {
+          background-color: rgba(41, 255, 184, 0.15); /* primary/15 */
         }
       }
       .animate-pulse-glow-cell {
           animation: pulse-glow-cell 5s ease-in-out infinite;
+      }
+
+      /* === NEW: Custom Pulse for SL Hit Kiwi Trail Table Cell === */
+      @keyframes pulse-glow-cell-yellow {
+        0%, 20%, 100% {
+          background-color: transparent;
+        }
+        10% {
+          background-color: rgba(245, 158, 11, 0.25); /* yellow-500/25 */
+        }
+      }
+      .animate-pulse-glow-cell-yellow {
+          animation: pulse-glow-cell-yellow 5s ease-in-out infinite;
       }
 
       /* === NEW: Confluence Text Glow for Kiwi Trail Table Symbol === */
@@ -531,6 +545,61 @@
       ::-webkit-scrollbar-corner {
         background: transparent;
       }
+      
+      /* === NEW: Kiwi Visualizer Styles & Animations === */
+       @keyframes planet-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.1); }
+        50% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+      }
+
+      @keyframes particle-follow-path {
+        from { offset-distance: 0%; opacity: 1; }
+        to { offset-distance: 100%; opacity: 0; }
+      }
+
+      @keyframes gentle-orbit {
+        0%, 100% { transform: translate(-50%, -50%) rotate(0deg) translateX(2px) rotate(0deg); }
+        50% { transform: translate(-50%, -50%) rotate(180deg) translateX(2px) rotate(-180deg); }
+      }
+      .animate-gentle-orbit {
+        animation: gentle-orbit 8s ease-in-out infinite;
+      }
+
+      @keyframes planet-flash-bullish {
+        0%, 100% {
+            border-color: #383A40; /* dark-border */
+            box-shadow: none;
+        }
+        50% {
+            border-color: rgba(41, 255, 184, 0.8);
+            box-shadow: 0 0 15px rgba(41, 255, 184, 0.6), 0 0 25px rgba(41, 255, 184, 0.3);
+        }
+      }
+      .animate-planet-flash-bullish {
+        animation: planet-flash-bullish 0.8s ease-out;
+      }
+
+      @keyframes planet-flash-bearish {
+        0%, 100% {
+            border-color: #383A40; /* dark-border */
+            box-shadow: none;
+        }
+        50% {
+            border-color: rgba(239, 68, 68, 0.8);
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.6), 0 0 25px rgba(239, 68, 68, 0.3);
+        }
+      }
+      .animate-planet-flash-bearish {
+        animation: planet-flash-bearish 0.8s ease-out;
+      }
+
+
+      .kiwi-visualizer-grid {
+        background-image:
+          linear-gradient(rgba(41, 255, 184, 0.05) 1px, transparent 1px),
+          linear-gradient(to right, rgba(41, 255, 184, 0.05) 1px, transparent 1px);
+        background-size: 2.5rem 2.5rem;
+      }
 
     </style>
   <script type="importmap">
@@ -540,7 +609,8 @@
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0",
     "html-to-image": "https://aistudiocdn.com/html-to-image@^1.11.13",
-    "recharts": "https://aistudiocdn.com/recharts@^3.3.0"
+    "recharts": "https://aistudiocdn.com/recharts@^3.3.0",
+    "https": "https://aistudiocdn.com/https@^1.0.0"
   }
 }
 </script>

@@ -32,7 +32,8 @@ const formatTimestamp = (timestamp: number): string => {
 
 const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onNotificationClick }) => {
     const { icon, title, body, accentColor, iconColor } = getNotificationDetails(notification);
-    const isClickable = !['5m'].includes(notification.timeframe);
+    // FIX: Add 'N/A' to the list of non-clickable timeframes.
+    const isClickable = !['5m', 'N/A'].includes(notification.timeframe);
 
     const handleClick = () => {
         if (isClickable) {

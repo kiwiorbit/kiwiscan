@@ -83,7 +83,8 @@ export const ToastContainer: React.FC<{
   onFinish: () => void;
   onClick?: (toast: Notification) => void;
 }> = ({ toast, onFinish, onClick }) => {
-    const isClickable = toast ? !['5m'].includes(toast.timeframe) : false;
+    // FIX: Add 'N/A' to the list of non-clickable timeframes.
+    const isClickable = toast ? !['5m', 'N/A'].includes(toast.timeframe) : false;
     
     return React.createElement(
         'div',
@@ -103,7 +104,10 @@ const useNotifications = () => {
     const [notifications, setNotifications] = useState<Notification[]>(() => {
         try {
             const saved = localStorage.getItem('notifications');
-            return saved ? JSON.parse(saved) : [];
+            // FIX: Add a guard to ensure that the parsed data from localStorage is an array.
+            // This prevents runtime errors if the stored data is corrupted or not an array.
+            const parsed = saved ? JSON.parse(saved) : [];
+            return Array.isArray(parsed) ? parsed : [];
         } catch {
             return [];
         }

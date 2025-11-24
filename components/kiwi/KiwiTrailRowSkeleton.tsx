@@ -11,10 +11,17 @@ const KiwiTrailRowSkeleton: React.FC<{ visibleColumns: { [key: string]: boolean 
         <td className="px-2 py-2 sm:py-3"><div className="h-4 w-12 bg-dark-border rounded mx-auto"></div></td>
         {visibleColumns['change24h'] && <td className="px-2 py-2 sm:py-3"><div className="h-4 w-12 bg-dark-border rounded mx-auto"></div></td>}
         {visibleColumns['change15m'] && <td className="px-2 py-2 sm:py-3"><div className="h-4 w-12 bg-dark-border rounded mx-auto"></div></td>}
+        {visibleColumns['kt-3m'] && <td className="px-2 py-2 sm:py-3"><div className="w-3 h-3 bg-dark-border rounded-full mx-auto"></div></td>}
         {visibleColumns['kt-5m'] && <td className="px-2 py-2 sm:py-3"><div className="w-3 h-3 bg-dark-border rounded-full mx-auto"></div></td>}
         {visibleColumns['kt-15m'] && <td className="px-2 py-2 sm:py-3"><div className="w-3 h-3 bg-dark-border rounded-full mx-auto"></div></td>}
         {visibleColumns['kt-1h'] && <td className="px-2 py-2 sm:py-3"><div className="w-3 h-3 bg-dark-border rounded-full mx-auto"></div></td>}
         {visibleColumns['kt-4h'] && <td className="px-2 py-2 sm:py-3"><div className="w-3 h-3 bg-dark-border rounded-full mx-auto"></div></td>}
+        {/* NEW Skeletons for HL Algo */}
+        {visibleColumns['hl-5m'] && <td className="px-2 py-2 sm:py-3"><div className="h-4 w-4 bg-dark-border rounded-full mx-auto"></div></td>}
+        {visibleColumns['hl-15m'] && <td className="px-2 py-2 sm:py-3"><div className="h-4 w-4 bg-dark-border rounded-full mx-auto"></div></td>}
+        {visibleColumns['hl-30m'] && <td className="px-2 py-2 sm:py-3"><div className="h-4 w-4 bg-dark-border rounded-full mx-auto"></div></td>}
+        {visibleColumns['hl-1h'] && <td className="px-2 py-2 sm:py-3"><div className="h-4 w-4 bg-dark-border rounded-full mx-auto"></div></td>}
+        
         {visibleColumns['dailyVwap'] && <td className="px-2 py-2 sm:py-3"><div className="h-4 w-4 bg-dark-border rounded-full mx-auto"></div></td>}
         {visibleColumns['ticks5m'] && <td className="px-2 py-2 sm:py-3"><div className="h-4 w-12 bg-dark-border rounded mx-auto"></div></td>}
         {visibleColumns['spotVolume1h'] && <td className="px-2 py-2 sm:py-3"><div className="h-4 w-12 bg-dark-border rounded mx-auto"></div></td>}

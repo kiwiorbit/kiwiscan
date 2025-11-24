@@ -1,5 +1,5 @@
 {
-  "name": "kiwi-dex",
+  "name": "ayan-bot",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,7 +12,8 @@
     "react-dom": "^19.2.0",
     "react": "^19.2.0",
     "html-to-image": "^1.11.13",
-    "recharts": "^3.3.0"
+    "recharts": "^3.3.0",
+    "https": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

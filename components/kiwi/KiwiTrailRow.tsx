@@ -1,3 +1,5 @@
+
+
 import React, { memo } from 'react';
 import type { KiwiTrailRowData, Timeframe, Settings, SymbolData } from '../../types';
 import { KIWI_TIMEFRAMES } from '../../types';
@@ -23,7 +25,7 @@ const KiwiTrailRow: React.FC<{
     settings: Settings;
     visibleColumns: { [key: string]: boolean };
 }> = memo(({ rowData, isFavorite, onToggleFavorite, onKiwiTrailCellClick, settings, visibleColumns }) => {
-    const { symbol, price, change24h, change15m, ticks5m, spotVolume1h, delta15m, cvd15m, delta1h, cvd1h, oiChange4h, oiChange8h, fundingRate, kiwiData, kiwiFlips, dailyVwap, vsBtc1h, rsi4h } = rowData;
+    const { symbol, price, change24h, change15m, ticks5m, spotVolume1h, delta15m, cvd15m, delta1h, cvd1h, oiChange4h, oiChange8h, fundingRate, kiwiData, kiwiFlips, dailyVwap, vsBtc1h, rsi4h, highLowAlgo, highLowAlgoRecency } = rowData;
 
     const isConfluence = change24h > 0 && oiChange4h > 0 && delta1h > 0;
 
@@ -43,11 +45,37 @@ const KiwiTrailRow: React.FC<{
     );
 
     const KiwiTrailDot: React.FC<{ data?: SymbolData; }> = ({ data }) => {
-        const bias = data?.luxalgoTrail?.slice(-1)[0]?.bias;
+        const bias = data?.kiwiTrail?.slice(-1)[0]?.bias;
         const color = bias === 1 ? 'bg-primary' : bias === 0 ? 'bg-red-500' : 'bg-dark-border';
         return (
             <div className={`w-3 h-3 rounded-full mx-auto ${color}`}></div>
         );
+    };
+
+    const HighLowAlgoSignal: React.FC<{ signal?: 'BUY' | 'SELL' | 'SL_HIT' | 'NONE'; isRecent: boolean; }> = ({ signal, isRecent }) => {
+        const slHitColor = isRecent ? 'text-yellow-500' : 'text-medium-text/80';
+        switch(signal) {
+            case 'BUY':
+                return <i className="fa-solid fa-caret-up text-primary"></i>;
+            case 'SELL':
+                return <i className="fa-solid fa-caret-down text-red-500"></i>;
+            case 'SL_HIT':
+                return <i className={`fa-solid fa-times ${slHitColor}`}></i>;
+            default:
+                return null;
+        }
+    };
+
+    const highLowAlgoGlowClass = (tf: '5m' | '15m' | '30m' | '1h') => {
+        if (!highLowAlgoRecency[tf] || !settings.enableLiveAnimations) return '';
+        if (highLowAlgo[tf] === 'SL_HIT') {
+            return 'animate-pulse-glow-cell-yellow';
+        }
+        // Only glow for recent BUY/SELL signals
+        if (highLowAlgo[tf] === 'BUY' || highLowAlgo[tf] === 'SELL') {
+            return 'animate-pulse-glow-cell';
+        }
+        return '';
     };
 
     return (
@@ -72,6 +100,11 @@ const KiwiTrailRow: React.FC<{
             {visibleColumns['change24h'] && <ColorizedCell value={change24h} formatter={formatPercent} />}
             {visibleColumns['change15m'] && <ColorizedCell value={change15m} formatter={formatPercent} />}
 
+            {visibleColumns['kt-3m'] && (
+                 <td onClick={(e) => { e.stopPropagation(); onKiwiTrailCellClick(symbol, '3m'); }} className={`px-2 py-2 sm:py-3 text-center transition-colors duration-500 ${kiwiFlips['3m'] && settings.enableLiveAnimations ? 'animate-pulse-glow-cell' : ''}`}>
+                    <KiwiTrailDot data={kiwiData['3m']} />
+                </td>
+            )}
             {visibleColumns['kt-5m'] && (
                  <td onClick={(e) => { e.stopPropagation(); onKiwiTrailCellClick(symbol, '5m'); }} className={`px-2 py-2 sm:py-3 text-center transition-colors duration-500 ${kiwiFlips['5m'] && settings.enableLiveAnimations ? 'animate-pulse-glow-cell' : ''}`}>
                     <KiwiTrailDot data={kiwiData['5m']} />
@@ -92,6 +125,13 @@ const KiwiTrailRow: React.FC<{
                     <KiwiTrailDot data={kiwiData['4h']} />
                 </td>
             )}
+
+            {/* NEW High/Low Algo Columns */}
+            {visibleColumns['hl-5m'] && <td onClick={(e) => { e.stopPropagation(); onKiwiTrailCellClick(symbol, '5m'); }} className={`px-2 py-2 sm:py-3 text-center transition-colors duration-500 ${highLowAlgoGlowClass('5m')}`}><HighLowAlgoSignal signal={highLowAlgo['5m']} isRecent={highLowAlgoRecency['5m']} /></td>}
+            {visibleColumns['hl-15m'] && <td onClick={(e) => { e.stopPropagation(); onKiwiTrailCellClick(symbol, '15m'); }} className={`px-2 py-2 sm:py-3 text-center transition-colors duration-500 ${highLowAlgoGlowClass('15m')}`}><HighLowAlgoSignal signal={highLowAlgo['15m']} isRecent={highLowAlgoRecency['15m']} /></td>}
+            {visibleColumns['hl-30m'] && <td onClick={(e) => { e.stopPropagation(); onKiwiTrailCellClick(symbol, '30m'); }} className={`px-2 py-2 sm:py-3 text-center transition-colors duration-500 ${highLowAlgoGlowClass('30m')}`}><HighLowAlgoSignal signal={highLowAlgo['30m']} isRecent={highLowAlgoRecency['30m']} /></td>}
+            {visibleColumns['hl-1h'] && <td onClick={(e) => { e.stopPropagation(); onKiwiTrailCellClick(symbol, '1h'); }} className={`px-2 py-2 sm:py-3 text-center transition-colors duration-500 ${highLowAlgoGlowClass('1h')}`}><HighLowAlgoSignal signal={highLowAlgo['1h']} isRecent={highLowAlgoRecency['1h']} /></td>}
+
             
             {visibleColumns['dailyVwap'] && (
                 <td className="px-2 py-2 sm:py-3 text-center">

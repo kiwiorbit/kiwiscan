@@ -41,12 +41,12 @@ export const checkAllAlerts = (
         setAlertStates(prev => ({ ...prev, [`${symbol}-${timeframe}-${type}`]: now }));
     };
     
-    // --- LuxAlgo Statistical Trailing Stop Flip ---
-    if ((alertConditions.luxalgoBullishFlip || alertConditions.luxalgoBearishFlip) && ['15m', '1h', '4h', '1d'].includes(timeframe)) {
-        if (data.luxalgoTrail && data.luxalgoTrail.length >= 3) {
+    // --- Kiwi Trail Flip ---
+    if ((alertConditions.kiwiBullishFlip || alertConditions.kiwiBearishFlip) && ['15m', '1h', '4h', '1d'].includes(timeframe)) {
+        if (data.kiwiTrail && data.kiwiTrail.length >= 3) {
             const BULLISH = 1;
             const BEARISH = 0;
-            const trailData = data.luxalgoTrail;
+            const trailData = data.kiwiTrail;
             
             // Explicitly check the last two candle transitions.
             // This prevents alerts for flips that are older than 2 candles.
@@ -62,13 +62,13 @@ export const checkAllAlerts = (
                     const isBullishFlip = prevTrail.bias === BEARISH && currentTrail.bias === BULLISH;
                     const isBearishFlip = prevTrail.bias === BULLISH && currentTrail.bias === BEARISH;
     
-                    if (alertConditions.luxalgoBullishFlip && isBullishFlip) {
+                    if (alertConditions.kiwiBullishFlip && isBullishFlip) {
                         const uniqueAlertType = `kiwitrail-bullish-flip-${currentTrail.time}`;
                         if (canFire(uniqueAlertType)) {
                             alertsToFire.push({
                                 symbol,
                                 timeframe,
-                                type: 'luxalgo-bullish-flip',
+                                type: 'kiwi-bullish-flip',
                                 price: klineForSignal.close,
                                 body: `Bias flipped to Bullish at $${klineForSignal.close.toFixed(4)}`
                             });
@@ -76,13 +76,13 @@ export const checkAllAlerts = (
                         }
                     }
     
-                    if (alertConditions.luxalgoBearishFlip && isBearishFlip) {
+                    if (alertConditions.kiwiBearishFlip && isBearishFlip) {
                         const uniqueAlertType = `kiwitrail-bearish-flip-${currentTrail.time}`;
                         if (canFire(uniqueAlertType)) {
                             alertsToFire.push({
                                 symbol,
                                 timeframe,
-                                type: 'luxalgo-bearish-flip',
+                                type: 'kiwi-bearish-flip',
                                 price: klineForSignal.close,
                                 body: `Bias flipped to Bearish at $${klineForSignal.close.toFixed(4)}`
                             });

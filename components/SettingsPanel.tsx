@@ -1,7 +1,7 @@
 
 
 import React from 'react';
-import type { Settings, TrailingStopSettings } from '../types';
+import type { Settings, TrailingStopSettings, HighLowAlgoSettings } from '../types';
 
 interface SettingsPanelProps {
     isOpen: boolean;
@@ -10,7 +10,6 @@ interface SettingsPanelProps {
     onOpenAlertsModal: () => void;
     onOpenAlertLogModal: () => void;
     onOpenTableSettingsModal: () => void;
-    onOpenAutomationModal: () => void;
     onReset: () => void;
     settings: Settings;
     onSettingChange: (key: keyof Settings, value: any) => void;
@@ -25,7 +24,6 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     onOpenAlertsModal,
     onOpenAlertLogModal,
     onOpenTableSettingsModal,
-    onOpenAutomationModal,
     onReset,
     settings,
     onSettingChange,
@@ -46,6 +44,13 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     const handleKiwiSettingChange = (key: keyof TrailingStopSettings, value: any) => {
         onSettingChange('trailingStopSettings', {
             ...settings.trailingStopSettings,
+            [key]: value
+        });
+    };
+
+    const handleAlgoSettingChange = (key: keyof HighLowAlgoSettings, value: any) => {
+        onSettingChange('highLowAlgoSettings', {
+            ...settings.highLowAlgoSettings,
             [key]: value
         });
     };
@@ -124,6 +129,39 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         </div>
                     </div>
 
+                    {/* High/Low Algo Settings */}
+                    <div>
+                        <h4 className="px-2 pb-1 font-semibold text-medium-text uppercase tracking-wider text-xs">High/Low Algo Settings</h4>
+                        <div className="p-2.5 rounded-lg bg-dark-card/80 flex flex-col gap-4">
+                            <div className="flex gap-2">
+                                <div className="flex-1">
+                                    <label className="font-medium text-xs text-light-text">Lookback</label>
+                                    <input type="number" value={settings.highLowAlgoSettings.dist} onChange={e => handleAlgoSettingChange('dist', parseInt(e.target.value) || 1)} className="w-full bg-dark-bg p-1.5 rounded-md mt-1 text-sm"/>
+                                </div>
+                                <div className="flex-1">
+                                    <label className="font-medium text-xs text-light-text">Buy Thresh %</label>
+                                    <input type="number" step="0.1" value={settings.highLowAlgoSettings.buy_threshold_pct} onChange={e => handleAlgoSettingChange('buy_threshold_pct', parseFloat(e.target.value) || 0)} className="w-full bg-dark-bg p-1.5 rounded-md mt-1 text-sm"/>
+                                </div>
+                                <div className="flex-1">
+                                    <label className="font-medium text-xs text-light-text">Sell Thresh %</label>
+                                    <input type="number" step="0.1" value={settings.highLowAlgoSettings.sell_threshold_pct} onChange={e => handleAlgoSettingChange('sell_threshold_pct', parseFloat(e.target.value) || 0)} className="w-full bg-dark-bg p-1.5 rounded-md mt-1 text-sm"/>
+                                </div>
+                            </div>
+                             <div>
+                                <label className="font-medium text-sm text-light-text">Buy Entry</label>
+                                <select value={settings.highLowAlgoSettings.buy_mode} onChange={e => handleAlgoSettingChange('buy_mode', e.target.value)} className="w-full bg-dark-bg p-1.5 rounded-md mt-1 text-sm border border-dark-border">
+                                    <option>Default</option><option>Hammer</option><option>Green Close</option><option>Hammer + Green</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="font-medium text-sm text-light-text">Sell Exit</label>
+                                 <select value={settings.highLowAlgoSettings.sell_mode} onChange={e => handleAlgoSettingChange('sell_mode', e.target.value)} className="w-full bg-dark-bg p-1.5 rounded-md mt-1 text-sm border border-dark-border">
+                                    <option>Default</option><option>Red Close</option><option>Doji</option><option>Doji + Red Close</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Kiwi Trail Settings */}
                     <div>
                         <h4 className="px-2 pb-1 font-semibold text-medium-text uppercase tracking-wider text-xs">Kiwi Trail Settings</h4>
@@ -187,7 +225,6 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                             <li><button onClick={() => { onOpenTableSettingsModal(); onClose(); }} className="w-full text-left p-2.5 rounded-lg bg-dark-card/80 hover:bg-dark-border transition-colors flex items-center gap-3"><i className="fa-solid fa-table-columns w-5 text-center text-base text-primary"></i><span className="font-medium text-sm">Table Columns</span></button></li>
                             <li><button onClick={() => { onOpenAlertsModal(); onClose(); }} className="w-full text-left p-2.5 rounded-lg bg-dark-card/80 hover:bg-dark-border transition-colors flex items-center gap-3"><i className="fa-solid fa-bell w-5 text-center text-base text-primary"></i><span className="font-medium text-sm">Configure Alerts</span></button></li>
                             <li><button onClick={() => { onOpenAlertLogModal(); onClose(); }} className="w-full text-left p-2.5 rounded-lg bg-dark-card/80 hover:bg-dark-border transition-colors flex items-center gap-3"><i className="fa-solid fa-clipboard-list w-5 text-center text-base text-primary"></i><span className="font-medium text-sm">View Alert Log</span></button></li>
-                            <li><button onClick={() => { onOpenAutomationModal(); onClose(); }} className="w-full text-left p-2.5 rounded-lg bg-dark-card/80 hover:bg-dark-border transition-colors flex items-center gap-3"><i className="fa-solid fa-robot w-5 text-center text-base text-primary"></i><span className="font-medium text-sm">Automation / Webhooks</span></button></li>
                         </ul>
                     </div>
                 </div>

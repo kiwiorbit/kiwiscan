@@ -49,6 +49,7 @@ const useUserSettings = (userAddress: string | null) => {
     const [isSubscribed, setIsSubscribed] = useState<boolean>(false);
     const [showFavoritesOnly, setShowFavoritesOnly] = useState<boolean>(false);
     const [isConfluenceFilterActive, setIsConfluenceFilterActive] = useState<boolean>(false);
+    const [isVisualView, setIsVisualView] = useState<boolean>(false);
     const viewMode: ViewMode = 'kiwiTrailTable';
     const [timeframe, setTimeframe] = useState<Timeframe>('4h');
 
@@ -79,6 +80,7 @@ const useUserSettings = (userAddress: string | null) => {
             setIsSubscribed(getInitialState<boolean>('isSubscribed', false, userAddress));
             setShowFavoritesOnly(getInitialState<boolean>('showFavoritesOnly', false, userAddress));
             setIsConfluenceFilterActive(getInitialState<boolean>('isConfluenceFilterActive', false, userAddress));
+            setIsVisualView(getInitialState<boolean>('isVisualView', false, userAddress));
         } else {
              // This is a logout event. Reset all settings to default.
             setSettings(DARK_THEME_SETTINGS);
@@ -88,6 +90,7 @@ const useUserSettings = (userAddress: string | null) => {
             setIsSubscribed(false);
             setShowFavoritesOnly(false);
             setIsConfluenceFilterActive(false);
+            setIsVisualView(false);
         }
     }, [userAddress]);
     
@@ -104,6 +107,7 @@ const useUserSettings = (userAddress: string | null) => {
     // Save UI state to localStorage
     useEffect(() => { if (userAddress) localStorage.setItem(`showFavoritesOnly_${userAddress}`, JSON.stringify(showFavoritesOnly)); }, [showFavoritesOnly, userAddress]);
     useEffect(() => { if (userAddress) localStorage.setItem(`isConfluenceFilterActive_${userAddress}`, JSON.stringify(isConfluenceFilterActive)); }, [isConfluenceFilterActive, userAddress]);
+    useEffect(() => { if (userAddress) localStorage.setItem(`isVisualView_${userAddress}`, JSON.stringify(isVisualView)); }, [isVisualView, userAddress]);
     
     const handleSettingChange = useCallback((key: keyof Settings, value: any) => {
         setSettings(prev => ({ ...prev, [key]: value }));
@@ -156,6 +160,7 @@ const useUserSettings = (userAddress: string | null) => {
     
     const handleShowFavoritesOnlyToggle = useCallback(() => setShowFavoritesOnly(prev => !prev), []);
     const handleToggleConfluenceFilter = useCallback(() => setIsConfluenceFilterActive(prev => !prev), []);
+    const handleToggleVisualView = useCallback(() => setIsVisualView(prev => !prev), []);
     
     const handleTimeframeChange = useCallback((tf: Timeframe) => setTimeframe(tf), []);
 
@@ -181,11 +186,11 @@ const useUserSettings = (userAddress: string | null) => {
     }, [userAddress]);
     
     return {
-        settings, theme, favorites, userSymbols, allSymbols, showFavoritesOnly, isConfluenceFilterActive, viewMode, timeframe, isSubscribed,
+        settings, theme, favorites, userSymbols, allSymbols, showFavoritesOnly, isConfluenceFilterActive, isVisualView, viewMode, timeframe, isSubscribed,
         handleSettingChange,
         handleAlertConditionChange, 
         handleColumnVisibilityChange,
-        toggleFavorite, handleShowFavoritesOnlyToggle, handleToggleConfluenceFilter,
+        toggleFavorite, handleShowFavoritesOnlyToggle, handleToggleConfluenceFilter, handleToggleVisualView,
         handleSaveAssetList, handleResetSettings, handleTimeframeChange, handleSubscribe,
     };
 };

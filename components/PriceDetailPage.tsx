@@ -1,21 +1,26 @@
+
+
 import React, { useRef, useEffect, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { fetchRsiForSymbol } from '../services/binanceService';
-import { fetchMexcSymbolData } from '../services/mexcService';
-import type { SymbolData, Timeframe } from '../types';
+import type { SymbolData, Timeframe, HighLowAlgoSignalPoint } from '../types';
+import TimeframeDropdown from './TimeframeDropdown';
+import { TIMEFRAMES } from '../constants';
 
 declare global {
     interface Window { echarts: any; }
 }
 
 const PriceDetailPage: React.FC = () => {
-    const { handleBackToScanner, settings, activeSymbol, timeframe, handleTimeframeChange, activeSymbolSource } = useAppContext();
+    const { handleBackToScanner, settings, activeSymbol, timeframe, handleTimeframeChange } = useAppContext();
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartInstanceRef = useRef<any>(null);
     const resizeObserverRef = useRef<ResizeObserver | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [chartType, setChartType] = useState<'candlestick' | 'line'>('candlestick');
+    const [showKiwiTrail, setShowKiwiTrail] = useState(true);
+    const [showHighLowAlgo, setShowHighLowAlgo] = useState(true);
     const [showSupertrend, setShowSupertrend] = useState(false);
     const [showVolumeProfile, setShowVolumeProfile] = useState(true);
     const [useHeikinAshi, setUseHeikinAshi] = useState(settings.trailingStopSettings.useHeikinAshiForTrail);
@@ -50,10 +55,7 @@ const PriceDetailPage: React.FC = () => {
                     }
                 };
                 
-                const symbolToFetch = activeSymbolSource === 'cex' ? `${activeSymbol}.P` : activeSymbol;
-                const data: SymbolData = activeSymbolSource === 'mexc'
-                    ? await fetchMexcSymbolData(symbolToFetch, timeframe as Timeframe, localSettings)
-                    : await fetchRsiForSymbol(symbolToFetch, timeframe, localSettings);
+                const data: SymbolData = await fetchRsiForSymbol(`${activeSymbol}.P`, timeframe as Timeframe, localSettings);
 
                 if (!data || data.klines.length === 0) {
                     throw new Error('No data returned for the symbol.');
@@ -62,33 +64,35 @@ const PriceDetailPage: React.FC = () => {
                 const volumeProfile = showVolumeProfile ? data.volumeProfile : null;
 
                 const dates = data.klines.map(k => new Date(k.time).toISOString().slice(0, 16).replace('T', ' '));
+                const klinesMap = new Map(data.klines.map((k, i) => [k.time, { ...k, index: i }]));
                 const candlestickData = data.klines.map(k => [k.open, k.close, k.low, k.high]);
                 const lineData = data.klines.map(k => k.close);
                 
-                const kiwiBullishData = data.luxalgoTrail?.map(t => t.bias === 1 ? t.level : null);
-                const kiwiBearishData = data.luxalgoTrail?.map(t => t.bias === 0 ? t.level : null);
+                const kiwiBullishData = showKiwiTrail ? data.kiwiTrail?.map(t => t.bias === 1 ? t.level : null) : [];
+                const kiwiBearishData = showKiwiTrail ? data.kiwiTrail?.map(t => t.bias === 0 ? t.level : null) : [];
                 const supertrendUpData = showSupertrend ? data.supertrend?.map(t => t.up) : [];
                 const supertrendDownData = showSupertrend ? data.supertrend?.map(t => t.dn) : [];
+                
+                const highLowChannelHighData = showHighLowAlgo ? data.highLowAlgoChannel?.map(c => c.high) : [];
+                const highLowChannelLowData = showHighLowAlgo ? data.highLowAlgoChannel?.map(c => c.low) : [];
 
-                const flipMarkers = data.luxalgoTrail ? data.luxalgoTrail.reduce((acc, trail, i, arr) => {
-                    if (i > 0 && trail.bias !== arr[i-1].bias) {
-                        const kline = data.klines[i];
-                        if (trail.bias === 1) { // Flipped to BULLISH
-                             acc.push({
-                                name: 'Bullish Flip',
-                                coord: [i, kline.low * 0.995], // Place BELOW the low
-                                itemStyle: { color: '#089981' }
-                            });
-                        } else { // Flipped to BEARISH
-                             acc.push({
-                                name: 'Bearish Flip',
-                                coord: [i, kline.high * 1.005], // Place ABOVE the high
-                                itemStyle: { color: '#F23645' }
-                            });
-                        }
+
+                const algoSignalMarkers = showHighLowAlgo ? data.highLowAlgoSignals?.map((signal: HighLowAlgoSignalPoint) => {
+                    const kline = klinesMap.get(signal.time);
+                    if (!kline) return null;
+                    
+                    const dateStr = new Date(signal.time).toISOString().slice(0, 16).replace('T', ' ');
+                    
+                    switch (signal.type) {
+                        case 'BUY':
+                            return { name: 'Buy', coord: [dateStr, kline.low], symbol: 'triangle', symbolRotate: 0, itemStyle: { color: '#29ffb8' } };
+                        case 'SELL':
+                            return { name: 'Sell', coord: [dateStr, kline.high], symbol: 'triangle', symbolRotate: 180, itemStyle: { color: '#ef4444' } };
+                        case 'SL_HIT':
+                            return { name: 'SL', coord: [dateStr, kline.low], symbol: 'cross', symbolSize: 15, itemStyle: { color: '#f59e0b' } };
+                        default: return null;
                     }
-                    return acc;
-                }, [] as any[]) : [];
+                }).filter(m => m !== null) : [];
 
                 const markLines = [];
                 if (volumeProfile) {
@@ -107,7 +111,7 @@ const PriceDetailPage: React.FC = () => {
                     backgroundColor: 'transparent',
                     tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
                     legend: { 
-                        data: ['Kiwi Trail Bull', 'Kiwi Trail Bear', 'Supertrend Up', 'Supertrend Down'], 
+                        data: ['High Channel', 'Low Channel', 'Kiwi Trail Bull', 'Kiwi Trail Bear', 'Supertrend Up', 'Supertrend Down'], 
                         inactiveColor: '#777', 
                         textStyle: { color: '#e5e9f2', fontSize: isMobile ? 10 : 12 },
                         itemGap: isMobile ? 8 : 10,
@@ -151,11 +155,13 @@ const PriceDetailPage: React.FC = () => {
                         }
                     ],
                     series: [
-                        { name: chartType === 'candlestick' ? 'Candlestick' : 'Price', type: chartType, data: chartType === 'candlestick' ? candlestickData : lineData, xAxisIndex: 0, yAxisIndex: 0, itemStyle: chartType === 'candlestick' ? { color: '#089981', color0: '#F23645', borderColor: '#089981', borderColor0: '#F23645' } : { color: '#29ffb8' }, markPoint: { symbol: 'circle', symbolSize: 10, data: flipMarkers, label: { show: false } }, markLine: { symbol: ['none', 'none'], silent: true, data: markLines, label: { textStyle: { color: '#e5e9f2' } } } },
+                        { name: chartType === 'candlestick' ? 'Candlestick' : 'Price', type: chartType, data: chartType === 'candlestick' ? candlestickData : lineData, xAxisIndex: 0, yAxisIndex: 0, itemStyle: chartType === 'candlestick' ? { color: '#089981', color0: '#F23645', borderColor: '#089981', borderColor0: '#F23645' } : { color: '#29ffb8' }, markPoint: { symbolSize: 12, data: algoSignalMarkers, label: { show: false } }, markLine: { symbol: ['none', 'none'], silent: true, data: markLines, label: { textStyle: { color: '#e5e9f2' } } } },
                         { name: 'Kiwi Trail Bull', type: 'line', data: kiwiBullishData, xAxisIndex: 0, yAxisIndex: 0, smooth: false, symbol: 'none', lineStyle: { color: '#089981', width: 2 } },
                         { name: 'Kiwi Trail Bear', type: 'line', data: kiwiBearishData, xAxisIndex: 0, yAxisIndex: 0, smooth: false, symbol: 'none', lineStyle: { color: '#F23645', width: 2 } },
                         { name: 'Supertrend Up', type: 'line', data: supertrendUpData, xAxisIndex: 0, yAxisIndex: 0, smooth: false, symbol: 'none', lineStyle: { color: 'rgba(8, 153, 129, 0.5)', width: 1.5, type: 'dotted' } },
                         { name: 'Supertrend Down', type: 'line', data: supertrendDownData, xAxisIndex: 0, yAxisIndex: 0, smooth: false, symbol: 'none', lineStyle: { color: 'rgba(242, 54, 69, 0.5)', width: 1.5, type: 'dotted' } },
+                        { name: 'High Channel', type: 'line', data: highLowChannelHighData, xAxisIndex: 0, yAxisIndex: 0, smooth: false, symbol: 'none', lineStyle: { color: 'rgba(239, 68, 68, 0.6)', width: 1.5, type: 'dashed' }, step: 'end' },
+                        { name: 'Low Channel', type: 'line', data: highLowChannelLowData, xAxisIndex: 0, yAxisIndex: 0, smooth: false, symbol: 'none', lineStyle: { color: 'rgba(41, 255, 184, 0.6)', width: 1.5, type: 'dashed' }, step: 'end' },
                         { name: 'Sell Volume', type: 'bar', xAxisIndex: 1, yAxisIndex: 1, stack: 'vp', data: vpSellData, itemStyle: { color: 'rgba(242, 54, 69, 0.5)', borderWidth: 0 }, barWidth: '100%' },
                         { name: 'Buy Volume', type: 'bar', xAxisIndex: 1, yAxisIndex: 1, stack: 'vp', data: vpBuyData, itemStyle: { color: 'rgba(8, 153, 129, 0.5)', borderWidth: 0 }, barWidth: '100%' }
                     ]
@@ -184,7 +190,7 @@ const PriceDetailPage: React.FC = () => {
             chartInstanceRef.current = null;
             resizeObserverRef.current = null;
         };
-    }, [settings, activeSymbol, timeframe, chartType, showSupertrend, showVolumeProfile, useHeikinAshi, refreshTrigger, activeSymbolSource]);
+    }, [settings, activeSymbol, timeframe, chartType, showKiwiTrail, showSupertrend, showVolumeProfile, useHeikinAshi, refreshTrigger, showHighLowAlgo]);
 
     return (
         <div className="w-full h-screen bg-dark-bg text-light-text flex flex-col p-2 sm:p-4">
@@ -198,14 +204,33 @@ const PriceDetailPage: React.FC = () => {
                 </button>
                 <div>
                     <h2 className="text-xl sm:text-2xl font-bold">{activeSymbol}</h2>
-                    <p className="text-sm text-medium-text">Chart ({timeframe})</p>
+                    <p className="text-sm text-medium-text">Chart</p>
                 </div>
                 <div className="ml-auto flex items-center gap-2 sm:gap-4">
+                    <div className="w-24">
+                       <TimeframeDropdown
+                            timeframe={timeframe}
+                            onTimeframeChange={handleTimeframeChange}
+                            timeframes={TIMEFRAMES}
+                        />
+                    </div>
                     <button 
                         onClick={handleRefresh} 
                         className="rounded-lg flex items-center justify-center w-[36px] h-[36px] transition-colors bg-dark-card hover:bg-dark-border text-light-text" 
                         title="Refresh Chart">
                         <i className="fa-solid fa-sync text-lg"></i>
+                    </button>
+                     <button 
+                        onClick={() => setShowHighLowAlgo(p => !p)} 
+                        className={`rounded-lg flex items-center justify-center w-[36px] h-[36px] transition-colors ${showHighLowAlgo ? 'bg-primary/20 text-primary' : 'bg-dark-card hover:bg-dark-border text-light-text'}`} 
+                        title="Toggle High/Low Algo Signals">
+                        <i className="fa-solid fa-compass text-lg"></i>
+                    </button>
+                    <button 
+                        onClick={() => setShowKiwiTrail(p => !p)} 
+                        className={`rounded-lg flex items-center justify-center w-[36px] h-[36px] transition-colors ${showKiwiTrail ? 'bg-primary/20 text-primary' : 'bg-dark-card hover:bg-dark-border text-light-text'}`} 
+                        title="Toggle Kiwi Trail">
+                        <i className="fa-solid fa-shoe-prints text-lg"></i>
                     </button>
                     <button 
                         onClick={() => setUseHeikinAshi(p => !p)} 

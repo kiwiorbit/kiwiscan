@@ -1,36 +1,36 @@
 import type { Timeframe, Settings, Narrative } from './types';
 
 const RAW_SYMBOLS: string[] = [
-  "BTCUSDT","ETHUSDT", "SOLUSDT", "BNBUSDT", "AVAXUSDT", "SUIUSDT", "ARBUSDT", 
-  "VIRTUALUSDT", "NEARUSDT", "PENDLEUSDT", "BIOUSDT", "JUPUSDT", 'PAXGUSDT',
-  "SUSHIUSDT", "CTSIUSDT", "CHRUSDT", "EDUUSDT", "GASUSDT", 
-  "BICOUSDT", "HEMIUSDT", "CAKEUSDT", "ZKCUSDT", "DASHUSDT", "XPLUSDT",
-  "ADAUSDT", "ATOMUSDT", "XRPUSDT", "DOGEUSDT", "FILUSDT", "TRXUSDT", 
-  "HBARUSDT", "FETUSDT", "AIXBTUSDT", "ENSUSDT", "VETUSDT", 
-  "STRKUSDT", "STXUSDT", "ZROUSDT", "MOVEUSDT", "JTOUSDT", 
-  "IOTAUSDT", "THETAUSDT", "SUPERUSDT", "ZECUSDT", "OGUSDT", 
-  "TOWNSUSDT", "CUSDT", "RESOLVUSDT", "SFPUSDT", "API3USDT", 
-  "BEAMXUSDT", "RENDERUSDT", "BERAUSDT", "KAITOUSDT",
-  "PYTHUSDT", "XLMUSDT", "BCHUSDT", "ETCUSDT", "SEIUSDT", 
-  "DOTUSDT", "UNIUSDT", "TAOUSDT", "LDOUSDT", "GALAUSDT", 
-  "BLURUSDT", "NEOUSDT", "RSRUSDT", "SANDUSDT", 
-  "YGGUSDT", "TRBUSDT", "MANAUSDT", "BATUSDT", "FIDAUSDT", 
-  "VANRYUSDT", "EGLDUSDT", "PHAUSDT", "SNXUSDT", "IOTXUSDT", 
-  "DEXEUSDT", "MORPHOUSDT", "TNSRUSDT",
-  'ENSOUSDT', 'PUMPUSDT', 'LINKUSDT', 'ZENUSDT', 'WLDUSDT', 'LTCUSDT', 'DEGOUSDT', 'FORMUSDT',
+    "BTCUSDT","ETHUSDT", "SOLUSDT", "BNBUSDT", "AVAXUSDT", "SUIUSDT", "ARBUSDT", 
+    "VIRTUALUSDT", "NEARUSDT", "PENDLEUSDT", "BIOUSDT", "JUPUSDT", 'PAXGUSDT',
+    "SUSHIUSDT", "CTSIUSDT", "CHRUSDT", "EDUUSDT", "GASUSDT", 
+    "BICOUSDT", "HEMIUSDT", "CAKEUSDT", "ZKCUSDT", "DASHUSDT", "XPLUSDT",
+    "ADAUSDT", "ATOMUSDT", "XRPUSDT", "DOGEUSDT", "FILUSDT", "TRXUSDT", 
+    "HBARUSDT", "FETUSDT", "AIXBTUSDT", "ENSUSDT", "VETUSDT", 
+    "STRKUSDT", "STXUSDT", "ZROUSDT", "MOVEUSDT", "JTOUSDT", 
+    "IOTAUSDT", "THETAUSDT", "SUPERUSDT", "ZECUSDT", "OGUSDT", 
+    "TOWNSUSDT", "CUSDT", "RESOLVUSDT", "SFPUSDT", "API3USDT", 
+    "BEAMXUSDT", "RENDERUSDT", "BERAUSDT", "KAITOUSDT",
+    "PYTHUSDT", "XLMUSDT", "BCHUSDT", "ETCUSDT", "SEIUSDT", 
+    "DOTUSDT", "UNIUSDT", "TAOUSDT", "LDOUSDT", "GALAUSDT", 
+    "BLURUSDT", "NEOUSDT", "RSRUSDT", "SANDUSDT", "BANKUSDT", "DYMUSDT",
+    "YGGUSDT", "TRBUSDT", "MANAUSDT", "BATUSDT", "FIDAUSDT", "XAIUSDT",
+    "VANRYUSDT", "EGLDUSDT", "PHAUSDT", "SNXUSDT", "IOTXUSDT", 
+    "DEXEUSDT", "MORPHOUSDT", "TNSRUSDT", "METUSDT", "ALLOUSDT", "PARTIUSDT",
+    'ENSOUSDT', 'PUMPUSDT', 'LINKUSDT', 'ZENUSDT', 'WLDUSDT', 'LTCUSDT', 'DEGOUSDT', 'FORMUSDT',
     'PENGUUSDT', 'WLFIUSDT',  'TURTLEUSDT', 'ZBTUSDT', 'EULUSDT', 'DIAUSDT',
     'POLUSDT', 'SOPHUSDT', 'MLNUSDT', 'ARUSDT', 'PROVEUSDT',  'SYRUPUSDT', 'ARKMUSDT',
-     'CFXUSDT', 'ACTUSDT', '0GUSDT', 'APEUSDT', 'ALICEUSDT', 'TWTUSDT', 'OPENUSDT',
+    'CFXUSDT', 'ACTUSDT', '0GUSDT', 'APEUSDT', 'ALICEUSDT', 'TWTUSDT', 'OPENUSDT',
     'RAYUSDT', 'ORDIUSDT',  'WUSDT', 'COOKIEUSDT', 'SPKUSDT', 'IMXUSDT', 'AUSDT',
     'ALGOUSDT', 'TUTUSDT', 'SIGNUSDT', 'SOLVUSDT','FUNUSDT', 'SHELLUSDT',
     'GRTUSDT',  'SAGAUSDT', 'UMAUSDT', 'HOOKUSDT', 'PORTALUSDT', 'LISTAUSDT', 'SSVUSDT',
     'HOMEUSDT', 'ANIMEUSDT', 'KAIAUSDT', 'AXSUSDT', 'MINAUSDT', 'ROSEUSDT', 'GUNUSDT', 'GPSUSDT',
-    'SCRTUSDT', 'TSTUSDT', 'NMRUSDT', 'PHBUSDT', 'INITUSDT', 'HFTUSDT', 'ACEUSDT', 'FISUSDT', 'MBLUSDT',
+    'SCRTUSDT', 'TSTUSDT', 'NMRUSDT', 'PHBUSDT', 'INITUSDT', 'HFTUSDT', 'ACEUSDT', 'FISUSDT',
     'RAREUSDT', 'USUALUSDT', 'MAGICUSDT', 'BARDUSDT','KSMUSDT', 'MANTAUSDT',
-  'FORTHUSDT', 'COWUSDT', 'ALTUSDT', 'LUMIAUSDT', 'REDUSDT', 'CKBUSDT', 'RONINUSDT', 'RPLUSDT', 
+    'FORTHUSDT', 'COWUSDT', 'ALTUSDT', 'LUMIAUSDT', 'REDUSDT', 'CKBUSDT', 'RONINUSDT', 'RPLUSDT', 
     'AVAUSDT', 'USTCUSDT', 'STGUSDT', 'BABYUSDT', 'MASKUSDT', 'GHSTUSDT', 'SLPUSDT', 'NEWTUSDT', 
-    'SXTUSDT', 'ONEUSDT', 'COTIUSDT', 'AWEUSDT', 'ACXUSDT', 'HAEDALUSDT', 'LUNAUSDT', 'ORCAUSDT', 
-    'VELODROMEUSDT', 'ARPAUSDT', 'ASRUSDT', 'ZILUSDT', 'ANKRUSDT', 'A2ZUSDT', 'MBOXUSDT', 
+    'SXTUSDT', 'ONEUSDT', 'COTIUSDT', 'AWEUSDT', 'ACXUSDT', 'LUNAUSDT', 
+    'ARPAUSDT', 'ASRUSDT', 'ZILUSDT', 'ANKRUSDT', 'A2ZUSDT', 'MBOXUSDT', 
     'SPELLUSDT', 'SCRUSDT', 'TLMUSDT', 'LAYERUSDT', 'MOVRUSDT', 'HMSTRUSDT', 'RDNTUSDT', 
     'AUDIOUSDT', 'SYNUSDT', 'HIGHUSDT', 'ONTUSDT', 'KNCUSDT', 'ASTRUSDT', 
     'HIVEUSDT','OXTUSDT', 'ICPUSDT',  'EOSUSDT', 
@@ -45,16 +45,17 @@ const RAW_SYMBOLS: string[] = [
 export const DEFAULT_SYMBOLS: string[] = [...new Set(RAW_SYMBOLS)];
 
 const SECONDARY_RAW_SYMBOLS: string[] = [
-    
+    'ENSOUSDT'
 ];
 export const SECONDARY_SYMBOLS: string[] = [...new Set(SECONDARY_RAW_SYMBOLS)];
 
 const TERTIARY_RAW_SYMBOLS: string[] = [
-    
+    'FORTHUSDT'
 ];
 export const TERTIARY_SYMBOLS: string[] = [...new Set(TERTIARY_RAW_SYMBOLS)];
 
 export const TIMEFRAMES: { value: Timeframe; label: string }[] = [
+    { value: '3m', label: '3m' },
     { value: '5m', label: '5m' },
     { value: '15m', label: '15m' },
     { value: '30m', label: '30m' },
@@ -69,10 +70,15 @@ export const TIMEFRAMES: { value: Timeframe; label: string }[] = [
 export const TOGGLEABLE_COLUMNS: { key: string; label: string }[] = [
     { key: 'change24h', label: 'Chg% (24h)' },
     { key: 'change15m', label: 'Chg% (15m)' },
+    { key: 'kt-3m', label: 'KT - 3m' },
     { key: 'kt-5m', label: 'KT - 5m' },
     { key: 'kt-15m', label: 'KT - 15m' },
     { key: 'kt-1h', label: 'KT - 1h' },
     { key: 'kt-4h', label: 'KT - 4h' },
+    { key: 'hl-5m', label: 'HL - 5m' }, // NEW
+    { key: 'hl-15m', label: 'HL - 15m' }, // NEW
+    { key: 'hl-30m', label: 'HL - 30m' }, // NEW
+    { key: 'hl-1h', label: 'HL - 1h' }, // NEW
     { key: 'dailyVwap', label: 'VWAP' },
     { key: 'ticks5m', label: 'Ticks 5m' },
     { key: 'spotVolume1h', label: 'Spot Vol (1h)' },
@@ -104,14 +110,22 @@ export const DARK_THEME_SETTINGS: Settings = {
         dataLength: 1,
         useHeikinAshiForTrail: true,
     },
-    anomalousBuyingVolumeSettings: {
-        multiplier: 10,
-        lookbackPeriod: '6h',
-        scanWindow: 10,
+    // NEW: High/Low Algo default settings
+    highLowAlgoSettings: {
+        dist: 30,
+        buy_threshold_pct: 0.5,
+        sell_threshold_pct: 0.3,
+        buy_mode: "Green Close",
+        sell_mode: "Red Close",
+        hammer_wick_ratio: 1.0,
+        doji_body_ratio: 0.5,
+        sl_mode: "Signal Candle Low",
+        sl_buffer_pct: 0.5,
+        intrabarSL: true,
     },
     alertConditions: {
-        luxalgoBullishFlip: true,
-        luxalgoBearishFlip: true,
+        kiwiBullishFlip: true,
+        kiwiBearishFlip: true,
         supertrendBuy: false,
         supertrendSell: false,
     },
@@ -122,8 +136,6 @@ export const DARK_THEME_SETTINGS: Settings = {
         return acc;
     }, {} as { [key: string]: boolean }),
     chartViewMode: 'modal',
-    enableWebhooks: false,
-    webhookUrl: '',
 };
 
 export interface RsiColorInfo {
@@ -170,4 +182,3 @@ export const getStrengthColor = (strength: number | undefined): string => {
     if (strength > -10) return '#9f1239'; // red-600
     return '#9f1239'; // red-700
 };
-
